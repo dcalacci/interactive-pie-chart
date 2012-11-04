@@ -58,7 +58,7 @@ public class circle extends View {
   //paints
   private Paint mCirclePaint;
   private Paint mTouchPointPaint;
-
+  private Paint mSeparatorLinesPaint;
   private Context mContext;
 
   /**
@@ -189,6 +189,16 @@ public class circle extends View {
         mCirclePaint
         );
 
+    for (TouchPoint point : mPoints) {
+      PointF touchPointCoords = degreesToPointF(point.mDegrees);
+      canvas.drawLine(
+          mCircleX,
+          mCircleY,
+          touchPointCoords.x,
+          touchPointCoords.y,
+          mSeparatorLinesPaint
+          );
+    }
   }
 
   /**
@@ -196,7 +206,7 @@ public class circle extends View {
    */
   @Override
   public boolean onTouchEvent(MotionEvent event) {
-    Log.d(TAG, "ONTOUCHEVENT | received a touchEvent");
+    //Log.d(TAG, "ONTOUCHEVENT | received a touchEvent");
     boolean result = mGestureDetector.onTouchEvent(event);
 
     if (event.getAction() == MotionEvent.ACTION_UP) {
@@ -239,7 +249,7 @@ public class circle extends View {
    * @param coords The coordinate to convert to a degree measurement
    */
   private double pointFtoDegrees(PointF coords) {
-    return (double)90+ Math.toDegrees(Math.atan2( coords.y - mCircleY, coords.x - mCircleX));
+    return (double) 90 + Math.toDegrees(Math.atan2( coords.y - mCircleY, coords.x - mCircleX));
   }
   /**
    * Same thing as pointFtoDegrees, but separate values for the x and y vals.
@@ -247,7 +257,7 @@ public class circle extends View {
    * @param y the y-value of the coordinate
    * */
   private double coordsToDegrees(float x, float y) {
-    return 90 + Math.toDegrees( Math.atan2( y - mCircleY, x - mCircleX));
+    return (double) 90 + Math.toDegrees( Math.atan2( y - mCircleY, x - mCircleX));
   }
 
   /**
@@ -279,6 +289,10 @@ public class circle extends View {
     mTouchPointPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     mTouchPointPaint.setStyle(Paint.Style.FILL);
     mTouchPointPaint.setColor(mTouchPointColor);
+
+    // set up the separatorLines paint
+    mSeparatorLinesPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+    mSeparatorLinesPaint.setStyle(Paint.Style.STROKE);
 
     // add some touch points
     addItem(180);
@@ -336,29 +350,78 @@ public class circle extends View {
   }
 
   /**
-   * This has a bad name - really, in this method we check to see if the given
-   * coords were inside of a touch point, and if it was, we remove it from
-   * the list of touch points.
-   * @param x An x-coordinate that is inside the point we want to remove
-   * @param y A y-coordinate that is inside the point we want to remove.
+   * returns true if d1 is in front of d2.
+   * @param d1 the reference degree value
+   * @param d2 the degree value to check the position of
    */
-  private boolean removePoint(float x, float y) {
-    for (int i = 0; i< mPoints.size(); i++) {
-      if (isTouchingThisPoint(x, y, mPoints.get(i))) {
-        mPoints.remove(i);
-        return true;
-      }
-    }
-    return false;
+  private boolean isInFront(double d1, double d2) {
+    // if d1 is in front of d2 and they're within 10 degrees of each other
+    return (((d1 - d2)%360) <= 10);
   }
 
+  /**
+   * returns true if d1 is behind d2
+   * @param d1 the reference degree value
+   * @param d2 the degree value to check the position of
+   */
+  private boolean isBehind(double d1, double d2) {
+    // if d1 is in front of d2 and they're within 10 degrees of each other
+    return (((d2 - d1)%360) <= 10);
+  }
+
+  /**
+   * returns the list of TouchPoints that are within 10 degrees of the
+   * given point, in the given direction
+   * @param p The touchpoint!
+   * @param clockwise True if we're moving clockwise, false otherwise.
+   */
+  private List<TouchPoint> getNearbyPoints(TouchPoint point, boolean clockwise) {
+    // list of points to return.
+    List<TouchPoint> nearbyPoints = new ArrayList<TouchPoint>();
+
+    // if we're moving clockwise, add any points that are within 10 degrees
+    // in front of the given point to nearbyPoints
+    if (clockwise) {
+      for (TouchPoint p : mPoints) {
+        if (!point.equals(p) &&
+          isInFront(p.mDegrees, point.mDegrees)) {
+          Log.d(TAG,
+              p.mDegrees +
+              " is in front of " +
+              point.mDegrees);
+
+          nearbyPoints.add(p);
+          }
+      }
+
+      // do the same if we're moving counter-clockwise.
+    } else if (!clockwise) {
+      for (TouchPoint p : mPoints) {
+        if (!point.equals(p) &&
+            isBehind(p.mDegrees, point.mDegrees)) {
+          Log.d(TAG,
+              p.mDegrees +
+              "is behind " +
+              point.mDegrees);
+          nearbyPoints.add(p);
+            }
+      }
+    }
+    return nearbyPoints;
+  }
+
+
+  /**
+   * Handles when the scroll movement is finished
+   */
   private void onScrollFinished() {
     for (TouchPoint p : mPoints) {
       p.isBeingTouched = false;
     }
-
     inScroll = false;
   }
+
+
 
   /**
    * let's track some gestures
@@ -376,33 +439,65 @@ public class circle extends View {
         float lastX = e2.getX() - distanceX;
         float lastY = e2.getY() - distanceY;
 
-        Log.d(TAG, "SCROLL | last point in the scroll was: " +
-            lastX +
-            ", " +
-            lastY);
+        /*Log.d(TAG, "SCROLL | last point in the scroll was: " +*/
+            //lastX +
+            //", " +
+            //lastY);
 
-        Log.d(TAG, "SCROLL | current point in the scroll is: " +
-            e2.getX()+
-            ", " +
-            e2.getY());
+        //Log.d(TAG, "SCROLL | current point in the scroll is: " +
+            //e2.getX()+
+            //", " +
+            //e2.getY());
 
         // go through the points, see if we're touching one(or more) and
         // then alter their degree values accordingly.
         for (TouchPoint p : mPoints ){
+          // if the first touch point is touching a point, then...
           if (isTouchingThisPoint(e1.getX(), e1.getY(), p)) {
             inScroll = true;
             p.isBeingTouched = true;
+            // otherwise, if the point "isbeingtouched"...
           } if (p.isBeingTouched) {
-            inScroll = true;
+            // calculate the degree values of the last touch event and the 
+            // current touch event
+            double lastDegree = coordsToDegrees(lastX, lastY);
+            double curDegree = coordsToDegrees(e2.getX(), e2.getY());
+            boolean clockwise = isInFront(curDegree, lastDegree);
+
+            double deltaDegrees;
+            if (clockwise) {
+              deltaDegrees = (curDegree - lastDegree)%360;
+            } else {
+              deltaDegrees = (lastDegree - curDegree)%360;
+            }
+
+            // update the degree value of the point being touched
             p.mDegrees = coordsToDegrees(e2.getX(), e2.getY());
+
+            // calculates the list of points that are nearby the current
+            // point
+            List<TouchPoint> nearbyPoints = getNearbyPoints(p, clockwise);
+
+            // update the degree value of all the points that ar
+            for (TouchPoint nearbyPoint : nearbyPoints) {
+              for (TouchPoint curPoint : mPoints) {
+                if (nearbyPoint.equals(curPoint)) {
+                  // might go to negative degrees if we're at like 0-10 degrees
+                  // and we're moving counterclockwise.
+                  curPoint.mDegrees = curPoint.mDegrees + deltaDegrees;
+                }
+              }
+            }
+            inScroll = true;
             invalidate();
             return true;
           }
         }
-    }
-        // we need to return true here so we can actually scroll.
-        public boolean onDown(MotionEvent e) {
-          return true;
-        }
+        return false;
           }
+    // we need to return true here so we can actually scroll.
+    public boolean onDown(MotionEvent e) {
+      return true;
+    }
   }
+}
