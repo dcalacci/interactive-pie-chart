@@ -22,13 +22,24 @@ import android.view.View;
 // Make the dots "move" each other or stop moving when we hit another dot
 // Add a selection box on the bottom for the different food groups
 // Make it PRETTY
+//
+// Have an ITEM class.  Items have two points, and on drawing, we draw
+// an arc inbetween those two points.  Items also have a color and a label?
+// OR items are ONE OF [Protein, Dairy, Vegetables ...]  Not sure.
+// 
+// make sure that when you expand or shrink a specific section, the other 
+// sections do something that looks nice - keep the other sections 
+// proportional instead of just shrinking them
+//
+// SCROLLING - DON'T CARE ABOUT IF THEIR LAST MOVEMENT WAS ON A DOT.
+// care only about if their FIRST one was.
 
 
 public class circle extends View {
   private String TAG = "circletouch.circle";
   // view boundary for the circle.
   private RectF mCircleBounds = new RectF();
-  private List<TouchPoint> mPoints = new ArrayList<TouchPoint>();
+  private ArrayList<TouchPoint> mPoints = new ArrayList<TouchPoint>();
 
   // circle positions
   private float mCircleX;
@@ -41,6 +52,7 @@ public class circle extends View {
 
   // gesture detection
   private GestureDetector mGestureDetector;
+  private boolean inScroll = false;
 
 
   //paints
@@ -186,7 +198,16 @@ public class circle extends View {
   public boolean onTouchEvent(MotionEvent event) {
     Log.d(TAG, "ONTOUCHEVENT | received a touchEvent");
     boolean result = mGestureDetector.onTouchEvent(event);
-    return result;
+
+    if (event.getAction() == MotionEvent.ACTION_UP) {
+      inScroll = false;
+      onScrollFinished();
+    }
+
+    if (result) {
+      return result;
+    }
+    return false;
 
   }
 
@@ -295,6 +316,7 @@ public class circle extends View {
    */
   private class TouchPoint {
     public double mDegrees;
+    public boolean isBeingTouched = false;
   }
 
   /**
@@ -330,62 +352,57 @@ public class circle extends View {
     return false;
   }
 
+  private void onScrollFinished() {
+    for (TouchPoint p : mPoints) {
+      p.isBeingTouched = false;
+    }
+
+    inScroll = false;
+  }
+
   /**
    * let's track some gestures
    */
   private class GestureListener extends GestureDetector.SimpleOnGestureListener {
 
     @Override
-    public boolean onScroll(
-        MotionEvent e1,
-        MotionEvent e2,
-        float distanceX,
-        float distanceY) {
+      public boolean onScroll(
+          MotionEvent e1,
+          MotionEvent e2,
+          float distanceX,
+          float distanceY) {
 
-      // calculate the last point in the scroll
-      float lastX = e2.getX() - distanceX;
-      float lastY = e2.getY() - distanceY;
+        // calculate the last point in the scroll
+        float lastX = e2.getX() - distanceX;
+        float lastY = e2.getY() - distanceY;
 
-      Log.d(TAG, "SCROLL | last point in the scroll was: " +
-          lastX +
-          ", " +
-          lastY);
+        Log.d(TAG, "SCROLL | last point in the scroll was: " +
+            lastX +
+            ", " +
+            lastY);
 
-      Log.d(TAG, "SCROLL | current point in the scroll is: " +
-          e2.getX()+
-          ", " +
-          e2.getY());
-
-      // remove the point we're touching (if we're touching one at all),
-      // and then create a new one with an updated degree value.
-      // ( I didn't like the way I did this, but i've been doing a lot of
-      // functional programming lately...)
-
-      if (removePoint(lastX, lastY) || removePoint(e1.getX(), e1.getY())) {
-        Log.d(TAG, "SCROLL | we were touching a point!");
-
-        // make the touchPoint with an updated degree value.
-        TouchPoint pointToAdd = new TouchPoint();
-        pointToAdd.mDegrees = coordsToDegrees(
-            e2.getX(), 
+        Log.d(TAG, "SCROLL | current point in the scroll is: " +
+            e2.getX()+
+            ", " +
             e2.getY());
 
-        Log.d(TAG, "SCROLL | adding point at: " + pointToAdd.mDegrees);
-
-        // add the new point to the list of points
-        mPoints.add(pointToAdd);
-        invalidate();
-        return true;
-      }
-      invalidate();
-      // we aren't touching a point.
-      return false;
+        // go through the points, see if we're touching one(or more) and
+        // then alter their degree values accordingly.
+        for (TouchPoint p : mPoints ){
+          if (isTouchingThisPoint(e1.getX(), e1.getY(), p)) {
+            inScroll = true;
+            p.isBeingTouched = true;
+          } if (p.isBeingTouched) {
+            inScroll = true;
+            p.mDegrees = coordsToDegrees(e2.getX(), e2.getY());
+            invalidate();
+            return true;
+          }
         }
-
-    // we need to return true here so we can actually scroll.
-    @Override
-    public boolean onDown(MotionEvent e) {
-      return true;
     }
+        // we need to return true here so we can actually scroll.
+        public boolean onDown(MotionEvent e) {
+          return true;
+        }
+          }
   }
-}
