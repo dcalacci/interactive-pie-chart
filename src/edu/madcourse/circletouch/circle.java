@@ -49,6 +49,9 @@ public class circle extends View {
 
   private Context mContext;
 
+  /**
+   * boring constructor with just a context
+   */
   public circle(Context c) {
     super(c);
     init();
@@ -56,6 +59,9 @@ public class circle extends View {
     mContext = c;
   }
 
+  /**
+   * constructor with attrs etc.
+   */
   public circle(Context ctx, AttributeSet attrs) {
     super(ctx, attrs);
 
@@ -146,7 +152,7 @@ public class circle extends View {
   }
 
   /**
-   * Draws the view
+   * Draws the view, takes a canvas.
    */
   protected void onDraw(Canvas canvas) {
     super.onDraw(canvas);
@@ -186,6 +192,7 @@ public class circle extends View {
 
   /**
    * converts a degree value to a coordinate on the edge of the circle
+   * @param theta The degree value to convert to a coordinate
    */
   private PointF degreesToPointF(double theta) {
     // had to play around with this a little to get what I wanted 
@@ -204,14 +211,20 @@ public class circle extends View {
 
   // I have no idea why I have to add 90 to these calculations but I do
   /**
-   * converts a coordinate on the edge of the circle to a degree value
+   * converts a set of coordinates and calculates the degree measurement in
+   * relation to the center of the circle - 0 degrees is at the top of the 
+   * circle, 180 at the bottom. 
+   * note that this can take coordinates that are anywhere in the view
+   * @param coords The coordinate to convert to a degree measurement
    */
   private double pointFtoDegrees(PointF coords) {
     return (double)90+ Math.toDegrees(Math.atan2( coords.y - mCircleY, coords.x - mCircleX));
   }
   /**
-   * converts a coordinate on the edge of the circle to a degree value
-   */
+   * Same thing as pointFtoDegrees, but separate values for the x and y vals.
+   * @param x the x-value of the coordinate
+   * @param y the y-value of the coordinate
+   * */
   private double coordsToDegrees(float x, float y) {
     return 90 + Math.toDegrees( Math.atan2( y - mCircleY, x - mCircleX));
   }
@@ -219,6 +232,10 @@ public class circle extends View {
   /**
    * determines the number of degrees between two points using the circle's
    * center point.
+   * @param x1 The x-coordinate of the first point
+   * @param y1 The y-coordinate of the first point
+   * @param x2 The x-coordinate of the second point
+   * @param y2 The y-coordinate of the second point
    */
   public int degreesMovedBetweenPoints(
       float x1, float y1, float x2, float y2) {
@@ -228,6 +245,9 @@ public class circle extends View {
     return (int) (angle1 - angle2);
   }
 
+  /**
+   * Initializes some values and all of the fancy paints and listeners
+   */
   private void init() {
 
     // set up the circle paint
@@ -257,6 +277,10 @@ public class circle extends View {
     invalidate();
   }
 
+  /**
+   * Adds an item to the list of points
+   * @param degrees the degree value for the point to add.
+   */
   private void addItem(int degrees) {
     // create a new point
     TouchPoint p = new TouchPoint();
@@ -264,8 +288,6 @@ public class circle extends View {
 
     // add it to the list of points
     mPoints.add(p);
-
-    // alert that data has been changed.
   }
 
   /**
@@ -276,7 +298,11 @@ public class circle extends View {
   }
 
   /**
-   * returns true if the given x and y coords are inside of the point p
+   * returns true if the given x and y coords are "inside" of point p - in 
+   * quotes because we're a little lenient to give the users some wiggle room.
+   * @param x The x value of the coordinate to check
+   * @param y The y-value of the coordinate to check
+   * @param p The TouchPoint to check
    */
   private boolean isTouchingThisPoint(float x, float y, TouchPoint p) {
     PointF pCoords = degreesToPointF((double)p.mDegrees);
@@ -288,8 +314,11 @@ public class circle extends View {
   }
 
   /**
-   * return true if we removed a point that contained the given coords, false
-   * otherwise
+   * This has a bad name - really, in this method we check to see if the given
+   * coords were inside of a touch point, and if it was, we remove it from
+   * the list of touch points.
+   * @param x An x-coordinate that is inside the point we want to remove
+   * @param y A y-coordinate that is inside the point we want to remove.
    */
   private boolean removePoint(float x, float y) {
     for (int i = 0; i< mPoints.size(); i++) {
@@ -329,15 +358,21 @@ public class circle extends View {
 
       // remove the point we're touching (if we're touching one at all),
       // and then create a new one with an updated degree value.
+      // ( I didn't like the way I did this, but i've been doing a lot of
+      // functional programming lately...)
+
       if (removePoint(lastX, lastY) || removePoint(e1.getX(), e1.getY())) {
         Log.d(TAG, "SCROLL | we were touching a point!");
 
+        // make the touchPoint with an updated degree value.
         TouchPoint pointToAdd = new TouchPoint();
         pointToAdd.mDegrees = coordsToDegrees(
             e2.getX(), 
             e2.getY());
 
         Log.d(TAG, "SCROLL | adding point at: " + pointToAdd.mDegrees);
+
+        // add the new point to the list of points
         mPoints.add(pointToAdd);
         invalidate();
         return true;
@@ -347,6 +382,7 @@ public class circle extends View {
       return false;
         }
 
+    // we need to return true here so we can actually scroll.
     @Override
     public boolean onDown(MotionEvent e) {
       return true;
