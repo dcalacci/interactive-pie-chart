@@ -20,4 +20,9 @@ local.properties
 .project
 .settings/
 
+build.xml
+project.properties
+proguard-project.txt
+local.properties
+
 
