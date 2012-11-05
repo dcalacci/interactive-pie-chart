@@ -357,7 +357,9 @@ public class circle extends View {
    * @param d2 the degree value to check the position of
    */
   private boolean movingClockwise(double start, double end) {
-    double diff = getDifference(end, start);
+    double diff = getDifference(start, end);
+    Log.d(TAG, "CLOCKWISE: starting at " +start +", ending at: "+end);
+    Log.d(TAG, "CLOCKWISE: diff is " +diff);
     return (diff >=180);
   }
 
@@ -400,11 +402,12 @@ public class circle extends View {
   }
 
   /**
+   * TODO: does not work for small differences(like the ones from motionevents)
    * returns the difference between two degree values
    * returns a number > 180 if d2 is 
    */
   private double getDifference(double d1, double d2) {
-   return (d1-d2)%360;
+   return ((d1-d2)%360);
   }
 
 
@@ -456,6 +459,7 @@ public class circle extends View {
             //TODO: clockwise always false.
             boolean clockwise = movingClockwise(lastDegree, curDegree);
             Log.d(TAG, "moving from " +lastDegree +" to " +curDegree);
+            Log.d(TAG, "CLOCKWISE IS: " +clockwise);
 
             double degreeDifference = getDifference(curDegree, lastDegree);
 
@@ -463,6 +467,7 @@ public class circle extends View {
             // number positive and small.
             // otherwise make it negative - we're moving in the other direction
             if (degreeDifference >= 180) {
+              Log.d(TAG, "DOES THIS EVER GET HIT");
               degreeDifference = (360-degreeDifference);
             } else if (degreeDifference < 180) {
               degreeDifference = degreeDifference*-1;
