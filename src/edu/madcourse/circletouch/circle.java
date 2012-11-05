@@ -456,22 +456,27 @@ public class circle extends View {
             double lastDegree = coordsToDegrees(lastX, lastY);
             double curDegree = coordsToDegrees(e2.getX(), e2.getY());
 
-            //TODO: clockwise always false.
-            boolean clockwise = movingClockwise(lastDegree, curDegree);
+            double degreeDifference = getDifference(curDegree, lastDegree);
+
+            boolean clockwise;
+            // what the hell
+            //boolean clockwise = movingClockwise(lastDegree, curDegree);
+            if (lastDegree > 250 && curDegree < -80) {
+              clockwise = true;
+            } else if (lastDegree < -80 && curDegree > 250) {
+              clockwise = false;
+            } else {
+              clockwise = (degreeDifference > 0);
+            }
+
             Log.d(TAG, "moving from " +lastDegree +" to " +curDegree);
             Log.d(TAG, "CLOCKWISE IS: " +clockwise);
 
-            double degreeDifference = getDifference(curDegree, lastDegree);
 
             // if it's greater than 180, then we're moving forward.  make the
             // number positive and small.
             // otherwise make it negative - we're moving in the other direction
-            if (degreeDifference >= 180) {
-              Log.d(TAG, "DOES THIS EVER GET HIT");
-              degreeDifference = (360-degreeDifference);
-            } else if (degreeDifference < 180) {
-              degreeDifference = degreeDifference*-1;
-            }
+            degreeDifference = degreeDifference*-1;
 
             // update all the points on the chart.
             for (TouchPoint pt : mPoints) {
