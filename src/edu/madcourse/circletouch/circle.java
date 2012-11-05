@@ -401,9 +401,10 @@ public class circle extends View {
 
   /**
    * returns the difference between two degree values
+   * returns a number > 180 if d2 is 
    */
   private double getDifference(double d1, double d2) {
-   return (d2-d1)%360;
+   return (d1-d2)%360;
   }
 
 
@@ -451,12 +452,23 @@ public class circle extends View {
             // current touch event
             double lastDegree = coordsToDegrees(lastX, lastY);
             double curDegree = coordsToDegrees(e2.getX(), e2.getY());
+
+            //TODO: clockwise always false.
             boolean clockwise = movingClockwise(lastDegree, curDegree);
             Log.d(TAG, "moving from " +lastDegree +" to " +curDegree);
-            Log.d(TAG, "MOVING CLOCKWISE: " +clockwise);
 
             double degreeDifference = getDifference(curDegree, lastDegree);
 
+            // if it's greater than 180, then we're moving forward.  make the
+            // number positive and small.
+            // otherwise make it negative - we're moving in the other direction
+            if (degreeDifference >= 180) {
+              degreeDifference = (360-degreeDifference);
+            } else if (degreeDifference < 180) {
+              degreeDifference = degreeDifference*-1;
+            }
+
+            // update all the points on the chart.
             for (TouchPoint pt : mPoints) {
               pt.mDegrees = pt.mDegrees + degreeDifference;
             }
