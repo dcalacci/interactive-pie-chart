@@ -222,50 +222,45 @@ public class circle extends View {
   /**
    * converts a degree value to a coordinate on the edge of the circle
    * @param theta The degree value to convert to a coordinate
+   * need to add pi/2 to the values because these calculations work for a 
+   * circle where 0 degrees is due north, not east.
    */
   private PointF radsToPointF(double theta) {
     float y = (float)
-      (mCircleY + (Math.sin(theta) * mCircleRadius));
+      (mCircleY - (Math.cos(theta) * mCircleRadius));
     float x = (float)
-      (mCircleX + (Math.cos(theta) * mCircleRadius));
+      (mCircleX + (Math.sin(theta) * mCircleRadius));
     return new PointF(x, y);
-    /*float y = (float)
-      (mCircleY -
-       (mCircleRadius *
-       Math.cos()
-      );
-    float x = (float)
-      (mCircleX +
-       (mCircleRadius *
-       Math.sin( (theta * Math.PI) / 180f ))
-      );
-    return new PointF(x, y);*/
   }
 
-  // I have no idea why I have to add 90 to these calculations but I do
-  /**
-   * converts a set of coordinates and calculates the degree measurement in
-   * relation to the center of the circle - 0 degrees is at the top of the 
-   * circle, 180 at the bottom. 
-   * note that this can take coordinates that are anywhere in the view
-   * @param coords The coordinate to convert to a degree measurement
-   */
-  private double pointFtoRads(PointF coords) {
-    return (double) Math.atan2(
-        coords.y - mCircleY,
-        coords.x - mCircleX);
-   //return (double) 90 + Math.atan2( coords.y - mCircleY, coords.x - mCircleX));
-  }
   /**
    * Same thing as pointFtoDegrees, but separate values for the x and y vals.
    * @param x the x-value of the coordinate
    * @param y the y-value of the coordinate
    * */
   private double coordsToRads(float x, float y) {
-    return (double) Math.atan2(
-        y - mCircleY,
-        x - mCircleX);
-    /*return (double) 90 + Math.toDegrees( Math.atan2( y - mCircleY, x - mCircleX));*/
+    double rads = (double) Math.atan2(
+        Math.abs(y - mCircleY),
+        Math.abs(x - mCircleX));
+    // range of atan2 output is -pi to pi...it's weird.
+    if (rads < 0) {
+      rads += 2*Math.PI;
+    }
+    if (x < mCircleX && y < mCircleY) {
+      rads -= Math.PI/2;
+    } else if (x < mCircleX && y > mCircleY) {
+      rads = (rads - Math.PI/2) - 2*rads;
+    }
+
+
+    return rads;
+
+    // because of the way we calculate the coordinate, half of the radians
+    // will be calculated as negative, which is okay, but it leads to some
+    // tricky calculations later, so we stop that nonsense right here.
+    //if (rads < 0) {
+
+
   }
 
   /**
@@ -276,12 +271,11 @@ public class circle extends View {
    * @param x2 The x-coordinate of the second point
    * @param y2 The y-coordinate of the second point
    */
-  public int radsMovedBetweenPoints(
+  public double radsMovedBetweenPoints(
       float x1, float y1, float x2, float y2) {
-
     double angle1 = coordsToRads(x1, y1);
     double angle2 = coordsToRads(x2, y2);
-    return (int) (angle1 - angle2);
+    return (double) (angle1 - angle2);
   }
 
   /**
@@ -368,7 +362,7 @@ public class circle extends View {
     double diff = getDifference(start, end);
     Log.d(TAG, "CLOCKWISE: starting at " +start +", ending at: "+end);
     Log.d(TAG, "CLOCKWISE: diff is " +diff);
-    return (diff >=180);
+    return (diff >= (2 * Math.PI));
   }
 
   /**
@@ -445,8 +439,7 @@ public class circle extends View {
         float lastX = e2.getX() + distanceX;
         float lastY = e2.getY() + distanceY;
 
-        // go through the points, see if we're touching one(or more) and
-        // then alter their degree values accordingly.
+        // let's mark the point we're touching
         for (TouchPoint p : mPoints ){
           // if the first touch point is touching a point, then...
           if (isTouchingThisPoint(e1.getX(), e1.getY(), p)) {
@@ -458,21 +451,15 @@ public class circle extends View {
 
             // calculate the degree values of the last touch event and the 
             // current touch event
-            double lastDegree = coordsToRads(lastX, lastY);
-            double curDegree = coordsToRads(e2.getX(), e2.getY());
+            double lastRad = coordsToRads(lastX, lastY);
+            double curRad = coordsToRads(e2.getX(), e2.getY());
 
-            double degreeDifference = getDifference(curDegree, lastDegree);
+            double degreeDifference = getDifference(curRad, lastRad);
 
-            boolean clockwise;
+            //boolean clockwise;
+
             // what the hell
-            //boolean clockwise = movingClockwise(lastDegree, curDegree);
-            if (lastDegree > 250 && curDegree < -80) {
-              clockwise = true;
-            } else if (lastDegree < -80 && curDegree > 250) {
-              clockwise = false;
-            } else {
-              clockwise = (degreeDifference > 0);
-            }
+            boolean clockwise = movingClockwise(lastRad, curRad);
 
 
             //TODO: dealing with REALLY FAST movements - have a check to see if
@@ -495,7 +482,7 @@ public class circle extends View {
               }
             }
 
-            Log.d(TAG, "moving from " +lastDegree +" to " +curDegree);
+            Log.d(TAG, "moving from " +lastRad +" to " +curRad);
             Log.d(TAG, "CLOCKWISE IS: " +clockwise);
 
             inScroll = true;
