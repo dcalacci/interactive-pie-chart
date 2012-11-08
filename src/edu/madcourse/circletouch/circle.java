@@ -227,9 +227,9 @@ public class circle extends View {
    */
   private PointF radsToPointF(double theta) {
     float y = (float)
-      (mCircleY - (Math.cos(theta) * mCircleRadius));
+      (mCircleY + (Math.sin(theta) * mCircleRadius));
     float x = (float)
-      (mCircleX + (Math.sin(theta) * mCircleRadius));
+      (mCircleX + (Math.cos(theta) * mCircleRadius));
     return new PointF(x, y);
   }
 
@@ -239,28 +239,9 @@ public class circle extends View {
    * @param y the y-value of the coordinate
    * */
   private double coordsToRads(float x, float y) {
-    double rads = (double) Math.atan2(
-        Math.abs(y - mCircleY),
-        Math.abs(x - mCircleX));
+    double rads = (double) Math.atan2((y - mCircleX),(x - mCircleX));
     // range of atan2 output is -pi to pi...it's weird.
-    if (rads < 0) {
-      rads += 2*Math.PI;
-    }
-    if (x < mCircleX && y < mCircleY) {
-      rads -= Math.PI/2;
-    } else if (x < mCircleX && y > mCircleY) {
-      rads = (rads - Math.PI/2) - 2*rads;
-    }
-
-
     return rads;
-
-    // because of the way we calculate the coordinate, half of the radians
-    // will be calculated as negative, which is okay, but it leads to some
-    // tricky calculations later, so we stop that nonsense right here.
-    //if (rads < 0) {
-
-
   }
 
   /**
@@ -275,7 +256,7 @@ public class circle extends View {
       float x1, float y1, float x2, float y2) {
     double angle1 = coordsToRads(x1, y1);
     double angle2 = coordsToRads(x2, y2);
-    return (double) (angle1 - angle2);
+    return (double) (angle2-angle1);
   }
 
   /**
@@ -297,9 +278,7 @@ public class circle extends View {
     mSeparatorLinesPaint.setStyle(Paint.Style.STROKE);
 
     // add some touch points
-    addItem(180);
-    addItem(90);
-    addItem(270);
+    addItem(Math.PI);
 
     // set up the gesture detector
     mGestureDetector = new GestureDetector(
@@ -318,10 +297,10 @@ public class circle extends View {
    * Adds an item to the list of points
    * @param degrees the degree value for the point to add.
    */
-  private void addItem(int degrees) {
+  private void addItem(double rads) {
     // create a new point
     TouchPoint p = new TouchPoint();
-    p.mRads = degrees;
+    p.mRads = rads;
 
     // add it to the list of points
     mPoints.add(p);
@@ -406,7 +385,7 @@ public class circle extends View {
    * returns a number > 180 if d2 is 
    */
   private double getDifference(double d1, double d2) {
-   return ((d1-d2)%360);
+   return (d1-d2);
   }
 
 
@@ -461,29 +440,8 @@ public class circle extends View {
             // what the hell
             boolean clockwise = movingClockwise(lastRad, curRad);
 
-
-            //TODO: dealing with REALLY FAST movements - have a check to see if
-            // the degree difference is PAST another point.  if it is, 
-            // ...don't allow that.  OR do what's right here so we move the
-            // other points with it.
-            // TODO: doesn't work post-270 degrees because of reasons
-            if (clockwise && hasPointInFront(p)) {
-              for (TouchPoint pt : mPoints) {
-                if (!pt.isBeingTouched && hasPointBehind(pt)) {
-                  pt.mRads = pt.mRads + degreeDifference;
-                }
-              }
-            }
-            if (!clockwise && hasPointBehind(p)) {
-              for (TouchPoint pt : mPoints) {
-                if (!pt.isBeingTouched && hasPointInFront(pt)) {
-                  pt.mRads = pt.mRads + degreeDifference;
-                }
-              }
-            }
-
             Log.d(TAG, "moving from " +lastRad +" to " +curRad);
-            Log.d(TAG, "CLOCKWISE IS: " +clockwise);
+            //Log.d(TAG, "CLOCKWISE IS: " +clockwise);
 
             inScroll = true;
             invalidate();
