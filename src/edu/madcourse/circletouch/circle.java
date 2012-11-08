@@ -377,12 +377,15 @@ public class circle extends View {
    * @param p1 the point to check
    */
   private boolean hasPointBehind(TouchPoint p1) {
-    double threshold = p1.mRads - 15;
-    for (TouchPoint point : mPoints ) {
-      if (point.mRads < p1.mRads &&
-          point.mRads > threshold) {
+    for (TouchPoint point : mPoints) {
+      // edge case
+      if (point.mRads > 0 && p1.mRads < 0 &&
+          (Math.PI - point.mRads + Math.PI + p1.mRads < ANGLE_THRESHOLD)) {
         return true;
-          }
+          } else if (point.mRads < p1.mRads &&
+              p1.mRads - point.mRads < ANGLE_THRESHOLD) {
+            return true;
+              }
     }
     return false;
   }
@@ -448,6 +451,7 @@ public class circle extends View {
             // have we moved clockwise?
             boolean clockwise = movingClockwise(lastRad, curRad);
 
+            Log.d(TAG, "Has Point behind? : " +hasPointBehind(p));
             Log.d(TAG, "Has Point in front? : " +hasPointInFront(p));
             Log.d(TAG, "moving from " +lastRad +" to " +curRad);
             //Log.d(TAG, "CLOCKWISE IS: " +clockwise);
