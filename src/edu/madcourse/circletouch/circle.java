@@ -67,7 +67,6 @@ public class circle extends View {
   public circle(Context c) {
     super(c);
     init();
-    // grab the typedarray from attrs
     mContext = c;
   }
 
@@ -109,16 +108,10 @@ public class circle extends View {
           "mTouchPointRadius is: " + mTouchPointRadius);
       Log.d(TAG, 
           "mTouchPointColor is: " + mTouchPointColor);
+    }
 
-      Log.d(TAG, "90 degrees in coords is: " +
-          degreesToPointF(90).x +
-          ", " +
-          degreesToPointF(90).y);
-
-      Log.d(TAG, "those points in degrees is: " +
-          pointFtoDegrees(degreesToPointF(90)));    }
+    // initialize everything
     init();
-
   }
 
   /**
@@ -172,7 +165,7 @@ public class circle extends View {
     super.onDraw(canvas);
 
     for (TouchPoint point : mPoints) {
-      PointF touchPointCoords = degreesToPointF(point.mDegrees);
+      PointF touchPointCoords = radsToPointF(point.mRads);
 
       // draw the touchPoint on the canvas
       canvas.drawCircle(
@@ -193,7 +186,7 @@ public class circle extends View {
 
     // drawing the touch-points
     for (TouchPoint point : mPoints) {
-      PointF touchPointCoords = degreesToPointF(point.mDegrees);
+      PointF touchPointCoords = radsToPointF(point.mRads);
       canvas.drawLine(
           mCircleX,
           mCircleY,
@@ -230,19 +223,23 @@ public class circle extends View {
    * converts a degree value to a coordinate on the edge of the circle
    * @param theta The degree value to convert to a coordinate
    */
-  private PointF degreesToPointF(double theta) {
-    // had to play around with this a little to get what I wanted 
+  private PointF radsToPointF(double theta) {
     float y = (float)
+      (mCircleY + (Math.sin(theta) * mCircleRadius));
+    float x = (float)
+      (mCircleX + (Math.cos(theta) * mCircleRadius));
+    return new PointF(x, y);
+    /*float y = (float)
       (mCircleY -
        (mCircleRadius *
-       Math.cos( (theta*Math.PI) / 180f ))
+       Math.cos()
       );
     float x = (float)
       (mCircleX +
        (mCircleRadius *
        Math.sin( (theta * Math.PI) / 180f ))
       );
-    return new PointF(x, y);
+    return new PointF(x, y);*/
   }
 
   // I have no idea why I have to add 90 to these calculations but I do
@@ -253,16 +250,22 @@ public class circle extends View {
    * note that this can take coordinates that are anywhere in the view
    * @param coords The coordinate to convert to a degree measurement
    */
-  private double pointFtoDegrees(PointF coords) {
-    return (double) 90 + Math.toDegrees(Math.atan2( coords.y - mCircleY, coords.x - mCircleX));
+  private double pointFtoRads(PointF coords) {
+    return (double) Math.atan2(
+        coords.y - mCircleY,
+        coords.x - mCircleX);
+   //return (double) 90 + Math.atan2( coords.y - mCircleY, coords.x - mCircleX));
   }
   /**
    * Same thing as pointFtoDegrees, but separate values for the x and y vals.
    * @param x the x-value of the coordinate
    * @param y the y-value of the coordinate
    * */
-  private double coordsToDegrees(float x, float y) {
-    return (double) 90 + Math.toDegrees( Math.atan2( y - mCircleY, x - mCircleX));
+  private double coordsToRads(float x, float y) {
+    return (double) Math.atan2(
+        y - mCircleY,
+        x - mCircleX);
+    /*return (double) 90 + Math.toDegrees( Math.atan2( y - mCircleY, x - mCircleX));*/
   }
 
   /**
@@ -273,11 +276,11 @@ public class circle extends View {
    * @param x2 The x-coordinate of the second point
    * @param y2 The y-coordinate of the second point
    */
-  public int degreesMovedBetweenPoints(
+  public int radsMovedBetweenPoints(
       float x1, float y1, float x2, float y2) {
 
-    double angle1 = coordsToDegrees(x1, y1);
-    double angle2 = coordsToDegrees(x2, y2);
+    double angle1 = coordsToRads(x1, y1);
+    double angle2 = coordsToRads(x2, y2);
     return (int) (angle1 - angle2);
   }
 
@@ -324,7 +327,7 @@ public class circle extends View {
   private void addItem(int degrees) {
     // create a new point
     TouchPoint p = new TouchPoint();
-    p.mDegrees = degrees;
+    p.mRads = degrees;
 
     // add it to the list of points
     mPoints.add(p);
@@ -334,7 +337,7 @@ public class circle extends View {
    * Container for touch points
    */
   private class TouchPoint {
-    public double mDegrees;
+    public double mRads;
     public boolean isBeingTouched = false;
   }
 
@@ -346,7 +349,7 @@ public class circle extends View {
    * @param p The TouchPoint to check
    */
   private boolean isTouchingThisPoint(float x, float y, TouchPoint p) {
-    PointF pCoords = degreesToPointF((double)p.mDegrees);
+    PointF pCoords = radsToPointF((double)p.mRads);
     double dist = Math.sqrt( 
         Math.pow( (double)pCoords.x - x, 2) +
         Math.pow( (double)pCoords.y - y, 2));
@@ -376,10 +379,10 @@ public class circle extends View {
    */
   private boolean hasPointInFront(TouchPoint p1) {
     // define threshold as the current degree value+15
-    double threshold = p1.mDegrees + 15;
+    double threshold = p1.mRads + 15;
     for (TouchPoint point : mPoints) {
-      if (point.mDegrees > p1.mDegrees &&
-          point.mDegrees < threshold) {
+      if (point.mRads > p1.mRads &&
+          point.mRads < threshold) {
         return true;
           }
     }
@@ -393,10 +396,10 @@ public class circle extends View {
    * @param p1 the point to check
    */
   private boolean hasPointBehind(TouchPoint p1) {
-    double threshold = p1.mDegrees - 15;
+    double threshold = p1.mRads - 15;
     for (TouchPoint point : mPoints ) {
-      if (point.mDegrees < p1.mDegrees &&
-          point.mDegrees > threshold) {
+      if (point.mRads < p1.mRads &&
+          point.mRads > threshold) {
         return true;
           }
     }
@@ -451,12 +454,12 @@ public class circle extends View {
             p.isBeingTouched = true;
             // otherwise, if the point "isbeingtouched"...
           } if (p.isBeingTouched) {
-            p.mDegrees = coordsToDegrees(e2.getX(), e2.getY());
+            p.mRads = coordsToRads(e2.getX(), e2.getY());
 
             // calculate the degree values of the last touch event and the 
             // current touch event
-            double lastDegree = coordsToDegrees(lastX, lastY);
-            double curDegree = coordsToDegrees(e2.getX(), e2.getY());
+            double lastDegree = coordsToRads(lastX, lastY);
+            double curDegree = coordsToRads(e2.getX(), e2.getY());
 
             double degreeDifference = getDifference(curDegree, lastDegree);
 
@@ -480,14 +483,14 @@ public class circle extends View {
             if (clockwise && hasPointInFront(p)) {
               for (TouchPoint pt : mPoints) {
                 if (!pt.isBeingTouched && hasPointBehind(pt)) {
-                  pt.mDegrees = pt.mDegrees + degreeDifference;
+                  pt.mRads = pt.mRads + degreeDifference;
                 }
               }
             }
             if (!clockwise && hasPointBehind(p)) {
               for (TouchPoint pt : mPoints) {
                 if (!pt.isBeingTouched && hasPointInFront(pt)) {
-                  pt.mDegrees = pt.mDegrees + degreeDifference;
+                  pt.mRads = pt.mRads + degreeDifference;
                 }
               }
             }
