@@ -283,6 +283,7 @@ public class circle extends View {
     // add some touch points
     addItem(Math.PI);
     addItem(Math.PI/2);
+    addItem(Math.PI/3);
 
     // set up the gesture detector
     mGestureDetector = new GestureDetector(
@@ -316,6 +317,18 @@ public class circle extends View {
   private class TouchPoint {
     public double mRads;
     public boolean isBeingTouched = false;
+
+    /**
+     * Moves this touchPoint clockwise the given number of radians
+     */
+    public void moveRads(double rads) {
+      mRads += rads;
+      // if we're going from + to -
+      if (Math.abs(mRads) > Math.PI) {
+        mRads *= -1;
+        mRads += rads;
+      }
+    }
   }
 
   /**
@@ -343,9 +356,9 @@ public class circle extends View {
    */
   private boolean movingClockwise(double start, double end) {
 
-    double diff = getDifference(end, start);
-   // Log.d(TAG, "CLOCKWISE: starting at " +start +", ending at: "+end);
-   // Log.d(TAG, "CLOCKWISE: diff is " +diff);
+    double diff = getDifference(start, end);
+    // Log.d(TAG, "CLOCKWISE: starting at " +start +", ending at: "+end);
+    // Log.d(TAG, "CLOCKWISE: diff is " +diff);
     return diff > 0;
   }
 
@@ -382,10 +395,10 @@ public class circle extends View {
       if (point.mRads > 0 && p1.mRads < 0 &&
           (Math.PI - point.mRads + Math.PI + p1.mRads < ANGLE_THRESHOLD)) {
         return true;
-          } else if (point.mRads < p1.mRads &&
-              p1.mRads - point.mRads < ANGLE_THRESHOLD) {
-            return true;
-              }
+      } else if (point.mRads < p1.mRads &&
+          p1.mRads - point.mRads < ANGLE_THRESHOLD) {
+        return true;
+          }
     }
     return false;
   }
@@ -461,18 +474,36 @@ public class circle extends View {
 
             // difference between the current position being touched
             // and the last position
-            double radDifference = getDifference(curRad, lastRad);
+            double radDifference = getDifference(lastRad, curRad);
 
             // have we moved clockwise?
             boolean clockwise = movingClockwise(lastRad, curRad);
 
-            /*Log.d(TAG, "Has Point behind? : " +hasPointBehind(p));
-            Log.d(TAG, "Has Point in front? : " +hasPointInFront(p));*/
-            double ptDif = getDifference(p.mRads, Math.PI/3);
-            Log.d(TAG, "Difference is: " +ptDif);
-            /*
-            Log.d(TAG, "moving from " +lastRad +" to " +curRad);
-            Log.d(TAG, "CLOCKWISE IS: " +clockwise);*/
+            if (clockwise) {
+              Log.d(TAG, "CLOCKWISE");
+            } else{
+              Log.d(TAG, "NOT CLOCKWISE");
+            }
+
+
+            // if clockwise and points in front, move everything.
+            if (clockwise && hasPointInFront(p)) {
+              for (TouchPoint pt : mPoints) {
+                if (!pt.isBeingTouched && hasPointBehind(pt)) {
+                  Log.d(TAG, "hasPointInFront");
+                  pt.moveRads(radDifference);
+                  //pt.mRads += radDifference;
+                }
+              }
+            } else if (!clockwise && hasPointBehind(p)) {
+              for (TouchPoint pt : mPoints) {
+                if(!pt.isBeingTouched && hasPointInFront(pt)) {
+                  Log.d(TAG, "hasPointBehind");
+                  pt.moveRads(radDifference);
+                }
+              }
+            }
+
 
             inScroll = true;
             invalidate();
