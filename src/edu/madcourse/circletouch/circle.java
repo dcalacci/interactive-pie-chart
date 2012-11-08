@@ -126,14 +126,15 @@ public class circle extends View {
    * the circle and it's boundary area here.
    */
   public void onSizeChanged(int w, int h, int oldw, int oldh) {
+    // calculate the total padding size
     float xpad = (float) (getPaddingLeft() + getPaddingRight());
     float ypad = (float) (getPaddingTop() + getPaddingBottom());
 
-    //figure out the "correct" width and height
+    //figure out the "correct" width and height based on the padding
     float ww = (float) w - xpad;
     float hh = (float) h - ypad;
 
-    // let's make the circle as large as it can be
+    // let's make the circle as large as it can be for this view
     float diameter = (float) Math.min(ww, hh);
 
     // make the rectf for the boundary
@@ -164,7 +165,8 @@ public class circle extends View {
   }
 
   /**
-   * Draws the view, takes a canvas.
+   * Draws the view
+   * @param canvas The canvas to draw on, dummy!
    */
   protected void onDraw(Canvas canvas) {
     super.onDraw(canvas);
@@ -189,6 +191,7 @@ public class circle extends View {
         mCirclePaint
         );
 
+    // drawing the touch-points
     for (TouchPoint point : mPoints) {
       PointF touchPointCoords = degreesToPointF(point.mDegrees);
       canvas.drawLine(
@@ -209,11 +212,13 @@ public class circle extends View {
     //Log.d(TAG, "ONTOUCHEVENT | received a touchEvent");
     boolean result = mGestureDetector.onTouchEvent(event);
 
+    // if the user lifts their finger, we're not in a scroll.
     if (event.getAction() == MotionEvent.ACTION_UP) {
       inScroll = false;
       onScrollFinished();
     }
 
+    // return true if mGestureDetector handled the event
     if (result) {
       return result;
     }
@@ -370,12 +375,11 @@ public class circle extends View {
    * @param p1 the point to check
    */
   private boolean hasPointInFront(TouchPoint p1) {
+    // define threshold as the current degree value+15
+    double threshold = p1.mDegrees + 15;
     for (TouchPoint point : mPoints) {
-      double diff = getDifference(p1.mDegrees, point.mDegrees);
-      // if greater than 180 then point is in front of p1, and if it's within
-      // 10 of 360, the two points are 10 away.
-      if ((diff >= 180) &&
-          (360 - diff <= 20)) {
+      if (point.mDegrees > p1.mDegrees &&
+          point.mDegrees < threshold) {
         return true;
           }
     }
@@ -389,12 +393,10 @@ public class circle extends View {
    * @param p1 the point to check
    */
   private boolean hasPointBehind(TouchPoint p1) {
-    for (TouchPoint point : mPoints) {
-      double diff = getDifference(p1.mDegrees, point.mDegrees);
-      // if greater than 180 then point is in front of p1, and if it's within
-      // 10 of 360, the two points are 10 away.
-      if ((diff < 180) &&
-          (diff <= 20)) {
+    double threshold = p1.mDegrees - 15;
+    for (TouchPoint point : mPoints ) {
+      if (point.mDegrees < p1.mDegrees &&
+          point.mDegrees > threshold) {
         return true;
           }
     }
@@ -469,22 +471,33 @@ public class circle extends View {
               clockwise = (degreeDifference > 0);
             }
 
+
+            //TODO: dealing with REALLY FAST movements - have a check to see if
+            // the degree difference is PAST another point.  if it is, 
+            // ...don't allow that.  OR do what's right here so we move the
+            // other points with it.
+            // TODO: doesn't work post-270 degrees because of reasons
+            if (clockwise && hasPointInFront(p)) {
+              for (TouchPoint pt : mPoints) {
+                if (!pt.isBeingTouched && hasPointBehind(pt)) {
+                  pt.mDegrees = pt.mDegrees + degreeDifference;
+                }
+              }
+            }
+            if (!clockwise && hasPointBehind(p)) {
+              for (TouchPoint pt : mPoints) {
+                if (!pt.isBeingTouched && hasPointInFront(pt)) {
+                  pt.mDegrees = pt.mDegrees + degreeDifference;
+                }
+              }
+            }
+
             Log.d(TAG, "moving from " +lastDegree +" to " +curDegree);
             Log.d(TAG, "CLOCKWISE IS: " +clockwise);
 
-
-            // if it's greater than 180, then we're moving forward.  make the
-            // number positive and small.
-            // otherwise make it negative - we're moving in the other direction
-            degreeDifference = degreeDifference*-1;
-
-            // update all the points on the chart.
-            for (TouchPoint pt : mPoints) {
-              pt.mDegrees = pt.mDegrees + degreeDifference;
-            }
-          inScroll = true;
-          invalidate();
-          return true;
+            inScroll = true;
+            invalidate();
+            return true;
           }
         }
         return false;
