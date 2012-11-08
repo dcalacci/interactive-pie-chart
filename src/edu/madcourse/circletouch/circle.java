@@ -46,6 +46,9 @@ public class circle extends View {
   private float mCircleY;
   private float mCircleRadius;
 
+  // angle stuff
+  private final double ANGLE_THRESHOLD = 0.174532;
+
   // touchPoint info
   private int mTouchPointRadius;
   private int mTouchPointColor;
@@ -279,6 +282,7 @@ public class circle extends View {
 
     // add some touch points
     addItem(Math.PI);
+    addItem(Math.PI/2);
 
     // set up the gesture detector
     mGestureDetector = new GestureDetector(
@@ -334,10 +338,11 @@ public class circle extends View {
    * TODO:
    * This should be changed because we only use it with the motionevent values.
    * returns true if d1 is within 30 degrees in front of d2
-   * @param d1 the reference degree value
-   * @param d2 the degree value to check the position of
+   * @param start the reference radian value
+   * @param start the radian value to check the position of
    */
   private boolean movingClockwise(double start, double end) {
+
     double diff = getDifference(start, end);
     Log.d(TAG, "CLOCKWISE: starting at " +start +", ending at: "+end);
     Log.d(TAG, "CLOCKWISE: diff is " +diff);
@@ -346,22 +351,25 @@ public class circle extends View {
 
   /**
    * returns true if the given point has another point in front of it
-   * (clockwise) within 10 degrees or less - should only be called if 
+   * (clockwise) within ANGLE_THRESHOLD or less - should only be called if 
    * the touchPoint is being rotated clockwise.
    * @param p1 the point to check
    */
   private boolean hasPointInFront(TouchPoint p1) {
-    // define threshold as the current degree value+15
-    double threshold = p1.mRads + 15;
     for (TouchPoint point : mPoints) {
-      if (point.mRads > p1.mRads &&
-          point.mRads < threshold) {
+      // edge case
+      if (point.mRads < 0 && p1.mRads > 0 &&
+          ((Math.PI + point.mRads + Math.PI - p1.mRads) < ANGLE_THRESHOLD)) {
+        return true;
+      } else if (point.mRads > p1.mRads &&
+          point.mRads - p1.mRads < ANGLE_THRESHOLD) {
         return true;
           }
     }
     return false;
   }
 
+  // TODO: change this to handle radians
   /**
    * returns true if the given point has another point in behind it
    * (counter-clockwise) within 10 degrees or less - should only be called if 
@@ -380,12 +388,12 @@ public class circle extends View {
   }
 
   /**
-   * TODO: does not work for small differences(like the ones from motionevents)
-   * returns the difference between two degree values
-   * returns a number > 180 if d2 is 
+   * returns the difference between two radian values
+   * @param r1 The first angle
+   * @param r2 The second angle
    */
-  private double getDifference(double d1, double d2) {
-   return (d1-d2);
+  private double getDifference(double r1, double d2) {
+    return (r1-d2);
   }
 
 
@@ -433,13 +441,14 @@ public class circle extends View {
             double lastRad = coordsToRads(lastX, lastY);
             double curRad = coordsToRads(e2.getX(), e2.getY());
 
+            // difference between the current position being touched
+            // and the last position
             double degreeDifference = getDifference(curRad, lastRad);
 
-            //boolean clockwise;
-
-            // what the hell
+            // have we moved clockwise?
             boolean clockwise = movingClockwise(lastRad, curRad);
 
+            Log.d(TAG, "Has Point in front? : " +hasPointInFront(p));
             Log.d(TAG, "moving from " +lastRad +" to " +curRad);
             //Log.d(TAG, "CLOCKWISE IS: " +clockwise);
 
