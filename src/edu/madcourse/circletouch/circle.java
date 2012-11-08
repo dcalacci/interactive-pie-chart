@@ -343,10 +343,10 @@ public class circle extends View {
    */
   private boolean movingClockwise(double start, double end) {
 
-    double diff = getDifference(start, end);
-    Log.d(TAG, "CLOCKWISE: starting at " +start +", ending at: "+end);
-    Log.d(TAG, "CLOCKWISE: diff is " +diff);
-    return (diff >= (2 * Math.PI));
+    double diff = getDifference(end, start);
+   // Log.d(TAG, "CLOCKWISE: starting at " +start +", ending at: "+end);
+   // Log.d(TAG, "CLOCKWISE: diff is " +diff);
+    return diff > 0;
   }
 
   /**
@@ -391,12 +391,27 @@ public class circle extends View {
   }
 
   /**
-   * returns the difference between two radian values
-   * @param r1 The first angle
-   * @param r2 The second angle
+   * returns the difference between two radian values, negative if end is
+   * under pi rads away from start, ccw, positive otherwise.
+   * @param start The first angle
+   * @param end The second angle
    */
-  private double getDifference(double r1, double d2) {
-    return (r1-d2);
+  private double getDifference(double start, double end) {
+    // if result is greater than pi, subtract it from 2pi.
+    double diff;
+    //edge case from -pi to pi
+    if (end < 0 && start > 0) {
+      diff = Math.PI - start + Math.PI + end;
+    }
+    // reverse case - start is on top, end is on bottom. Also handles the
+    // regular case.
+    else {
+      diff = end - start;
+    }
+    if (diff > Math.PI) {
+      diff = diff-Math.PI*2; // negative because it's in ccw rotation
+    }
+    return diff;
   }
 
 
@@ -446,15 +461,18 @@ public class circle extends View {
 
             // difference between the current position being touched
             // and the last position
-            double degreeDifference = getDifference(curRad, lastRad);
+            double radDifference = getDifference(curRad, lastRad);
 
             // have we moved clockwise?
             boolean clockwise = movingClockwise(lastRad, curRad);
 
-            Log.d(TAG, "Has Point behind? : " +hasPointBehind(p));
-            Log.d(TAG, "Has Point in front? : " +hasPointInFront(p));
+            /*Log.d(TAG, "Has Point behind? : " +hasPointBehind(p));
+            Log.d(TAG, "Has Point in front? : " +hasPointInFront(p));*/
+            double ptDif = getDifference(p.mRads, Math.PI/3);
+            Log.d(TAG, "Difference is: " +ptDif);
+            /*
             Log.d(TAG, "moving from " +lastRad +" to " +curRad);
-            //Log.d(TAG, "CLOCKWISE IS: " +clockwise);
+            Log.d(TAG, "CLOCKWISE IS: " +clockwise);*/
 
             inScroll = true;
             invalidate();
