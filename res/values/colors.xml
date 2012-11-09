@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    
+    <color name="Background">#fffafa</color>
+    
+    <!-- Base Colors -->
+    <color name="Protien">#b22222</color>
+    <color name="Vegetable">#228b22</color>
+    <color name="Dairy">#0000ff</color>
+    <color name="Oil_Sugar">#ffd700</color>
+    <color name="Fruit">#ff1493</color>
+    <color name="Grain">#cd853f</color>
+    
+    <!-- Highlight Colors -->
+    <color name="Protien_Highlight">#ff0000</color>
+    <color name="Vegetable_Highlight">#7fff00</color>
+    <color name="Dairy_Highlight">#00bfff</color>
+    <color name="Oil_Sugar_Highlight">#ffff00</color>
+    <color name="Fruit_Highlight">#ff69b4</color>
+    <color name="Grain_Highlight">#d2691e</color>
+    
+    <!-- Grayed Colors -->
+    <color name="Protien_Grayed">#e9967a</color>
+    <color name="Vegetable_Grayed">#bdb76b</color>
+    <color name="Dairy_Grayed">#b0c4de</color>
+    <color name="Oil_Sugar_Grayed">#eedd82</color>
+    <color name="Fruit_Grayed">#dda0dd</color>
+    <color name="Grain_Grayed">#d2b48c</color>
+    
+</resources>

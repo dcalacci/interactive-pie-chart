@@ -14,6 +14,7 @@ import android.util.Log;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.View;
+import android.widget.Toast;
 
 
 //TODO
@@ -48,6 +49,44 @@ public class circle extends View {
 	private float mCircleX;
 	private float mCircleY;
 	private float mCircleRadius;
+
+	// Rectangle Constants:
+	private int mRectSize;
+
+	//##################################################
+	//
+	// 				Rectangle positions	
+	//
+	//##################################################
+	// Protein 
+	private int mProteinRectX;
+	private int mProteinRectY;
+	private Paint mProteinPaint;
+
+	// Vegetable
+	private int mVegetableRectX;
+	private int mVegetableRectY;
+	private Paint mVegetablePaint;
+	
+	// Oil/Sugar
+	private int mOilSugarRectX;
+	private int mOilSugarRectY;	
+	private Paint mOilSugarPaint;
+	
+	// Dairy
+	private int mDairdRectX;
+	private int mDairyRectY;
+	private Paint mDairyPaint;
+
+	// Fruit
+	private int mFruitRectX;
+	private int mFruitRectY;
+	private Paint mFruitPaint;
+
+	// Grain
+	private int mGrainRectX;
+	private int mGrainRectY;
+	private Paint mGrainPaint;
 
 	// angle stuff
 	private final double ANGLE_THRESHOLD = 0.174532;
@@ -143,6 +182,8 @@ public class circle extends View {
 				diameter,
 				diameter);
 
+
+
 		// offset the boundary rect in accordance with the padding
 		mCircleBounds.offsetTo(getPaddingLeft(), getPaddingTop());
 
@@ -189,6 +230,10 @@ public class circle extends View {
 				mCircleRadius,
 				mCirclePaint
 				);
+
+		// Drawing Protein Rect
+		//canvas.drawRoundRect(mRectSize, mProteinRectX, mProteinRectX, paint);
+
 
 		// drawing the touch-points
 		for (TouchPoint point : mPoints) {
@@ -278,14 +323,34 @@ public class circle extends View {
 		mTouchPointPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
 		mTouchPointPaint.setStyle(Paint.Style.FILL);
 		mTouchPointPaint.setColor(mTouchPointColor);
+		
+		//Protein
+		mProteinPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+		mProteinPaint.setStyle(Paint.Style.FILL);
+		//mProteinPaint.setColorFilter(filter);
+		
+		//Vegetable
+		
+		//Dairy
+		
+		//Oil Sugar
+		
+		//Fruit
+		
+		//Grain
 
 		// set up the separatorLines paint
 		mSeparatorLinesPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
 		mSeparatorLinesPaint.setStyle(Paint.Style.STROKE);
 
+
+
+
 		// add some touch points
 		addItem(Math.PI);
 		addItem(Math.PI/2);
+		addItem(Math.PI*2);
+		addItem((Math.PI /2) * 3);
 
 		// set up the gesture detector
 		mGestureDetector = new GestureDetector(
@@ -313,6 +378,11 @@ public class circle extends View {
 		mPoints.add(p);
 	}
 
+	public void onAddCategoriesClicked(View v){
+
+		//Toast.makeText(getBaseContext(), "Please select a User", Toast.LENGTH_SHORT).show();
+	}
+
 	/**
 	 * Adds categories to the list of categories
 	 * @param pCCW - Counter Clockwise point
@@ -322,10 +392,10 @@ public class circle extends View {
 	 */
 	private void addCategory(TouchPoint pCCW, TouchPoint pCW, String category,  int color){
 		Category item = new Category(pCCW, pCW, category, color);
-		
+
 		mCategories.add(item);
 	}
-	
+
 	/**
 	 * Container for touch points
 	 */
@@ -333,7 +403,7 @@ public class circle extends View {
 		public double mRads;
 		public boolean isBeingTouched = false;
 	}
-	
+
 	/**
 	 * Container for "Items" on the pie chart
 	 * @param pCCW - the Counter Clockwise Point
