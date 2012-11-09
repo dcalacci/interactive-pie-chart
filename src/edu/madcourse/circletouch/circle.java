@@ -6,6 +6,7 @@ import edu.madcourse.circletouch.R;
 import android.content.Context;
 import android.content.res.TypedArray;
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.PointF;
 import android.graphics.RectF;
@@ -14,7 +15,6 @@ import android.util.Log;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.View;
-import android.widget.Toast;
 
 
 //TODO
@@ -42,51 +42,13 @@ public class circle extends View {
 	private RectF mCircleBounds = new RectF();
 	private ArrayList<TouchPoint> mPoints = new ArrayList<TouchPoint>();
 
-	// Items 
+	//Items 
 	private ArrayList<Category> mCategories = new ArrayList<Category>();
 
 	// circle positions
 	private float mCircleX;
 	private float mCircleY;
 	private float mCircleRadius;
-
-	// Rectangle Constants:
-	private int mRectSize;
-
-	//##################################################
-	//
-	// 				Rectangle positions	
-	//
-	//##################################################
-	// Protein 
-	private int mProteinRectX;
-	private int mProteinRectY;
-	private Paint mProteinPaint;
-
-	// Vegetable
-	private int mVegetableRectX;
-	private int mVegetableRectY;
-	private Paint mVegetablePaint;
-	
-	// Oil/Sugar
-	private int mOilSugarRectX;
-	private int mOilSugarRectY;	
-	private Paint mOilSugarPaint;
-	
-	// Dairy
-	private int mDairdRectX;
-	private int mDairyRectY;
-	private Paint mDairyPaint;
-
-	// Fruit
-	private int mFruitRectX;
-	private int mFruitRectY;
-	private Paint mFruitPaint;
-
-	// Grain
-	private int mGrainRectX;
-	private int mGrainRectY;
-	private Paint mGrainPaint;
 
 	// angle stuff
 	private final double ANGLE_THRESHOLD = 0.174532;
@@ -182,8 +144,6 @@ public class circle extends View {
 				diameter,
 				diameter);
 
-
-
 		// offset the boundary rect in accordance with the padding
 		mCircleBounds.offsetTo(getPaddingLeft(), getPaddingTop());
 
@@ -230,10 +190,6 @@ public class circle extends View {
 				mCircleRadius,
 				mCirclePaint
 				);
-
-		// Drawing Protein Rect
-		//canvas.drawRoundRect(mRectSize, mProteinRectX, mProteinRectX, paint);
-
 
 		// drawing the touch-points
 		for (TouchPoint point : mPoints) {
@@ -323,34 +279,15 @@ public class circle extends View {
 		mTouchPointPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
 		mTouchPointPaint.setStyle(Paint.Style.FILL);
 		mTouchPointPaint.setColor(mTouchPointColor);
-		
-		//Protein
-		mProteinPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-		mProteinPaint.setStyle(Paint.Style.FILL);
-		//mProteinPaint.setColorFilter(filter);
-		
-		//Vegetable
-		
-		//Dairy
-		
-		//Oil Sugar
-		
-		//Fruit
-		
-		//Grain
 
 		// set up the separatorLines paint
 		mSeparatorLinesPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
 		mSeparatorLinesPaint.setStyle(Paint.Style.STROKE);
 
-
-
-
 		// add some touch points
 		addItem(Math.PI);
 		addItem(Math.PI/2);
-		addItem(Math.PI*2);
-		addItem((Math.PI /2) * 3);
+		addItem(Math.PI/3);
 
 		// set up the gesture detector
 		mGestureDetector = new GestureDetector(
@@ -378,9 +315,24 @@ public class circle extends View {
 		mPoints.add(p);
 	}
 
-	public void onAddCategoriesClicked(View v){
+	/**
+	 * Container for touch points
+	 */
+	private class TouchPoint {
+		public double mRads;
+		public boolean isBeingTouched = false;
 
-		//Toast.makeText(getBaseContext(), "Please select a User", Toast.LENGTH_SHORT).show();
+		/**
+		 * Moves this touchPoint clockwise the given number of radians
+		 */
+		public void moveRads(double rads) {
+			mRads += rads;
+			// if we're going from + to -
+			if (Math.abs(mRads) > Math.PI) {
+				mRads *= -1;
+				mRads += rads;
+			}
+		}
 	}
 
 	/**
@@ -390,18 +342,10 @@ public class circle extends View {
 	 * @param category - the Category of the slice
 	 * @param color - Color of the category
 	 */
-	private void addCategory(TouchPoint pCCW, TouchPoint pCW, String category,  int color){
+	private void addCategory(TouchPoint pCCW, TouchPoint pCW, String category,  Color color){
 		Category item = new Category(pCCW, pCW, category, color);
 
 		mCategories.add(item);
-	}
-
-	/**
-	 * Container for touch points
-	 */
-	private class TouchPoint {
-		public double mRads;
-		public boolean isBeingTouched = false;
 	}
 
 	/**
@@ -415,9 +359,9 @@ public class circle extends View {
 		private TouchPoint pCCW;
 		private TouchPoint pCW;
 		private String category;
-		private int color; // I think it should be hex / refer to color.xml
+		private Color color; // I think it should be hex / refer to color.xml
 
-		public Category(TouchPoint ccw, TouchPoint cw, String category, int c ){
+		public Category(TouchPoint ccw, TouchPoint cw, String category, Color c ){
 			this.pCCW = ccw;
 			this.pCW = cw;
 			this.category = category;
@@ -436,15 +380,14 @@ public class circle extends View {
 			return this.category;
 		}
 
-		public int getColor(){
+		public Color getColor(){
 			return this.color;
 		}
 
-		public void setColor(int color){
+		public void setColor(Color color){
 			this.color = color;
 		}
 	}
-
 
 	/**
 	 * returns true if the given x and y coords are "inside" of point p - in 
@@ -472,9 +415,9 @@ public class circle extends View {
 	private boolean movingClockwise(double start, double end) {
 
 		double diff = getDifference(start, end);
-		Log.d(TAG, "CLOCKWISE: starting at " +start +", ending at: "+end);
-		Log.d(TAG, "CLOCKWISE: diff is " +diff);
-		return (diff >= (2 * Math.PI));
+		// Log.d(TAG, "CLOCKWISE: starting at " +start +", ending at: "+end);
+		// Log.d(TAG, "CLOCKWISE: diff is " +diff);
+		return diff > 0;
 	}
 
 	/**
@@ -505,10 +448,13 @@ public class circle extends View {
 	 * @param p1 the point to check
 	 */
 	private boolean hasPointBehind(TouchPoint p1) {
-		double threshold = p1.mRads - 15;
-		for (TouchPoint point : mPoints ) {
-			if (point.mRads < p1.mRads &&
-					point.mRads > threshold) {
+		for (TouchPoint point : mPoints) {
+			// edge case
+			if (point.mRads > 0 && p1.mRads < 0 &&
+					(Math.PI - point.mRads + Math.PI + p1.mRads < ANGLE_THRESHOLD)) {
+				return true;
+			} else if (point.mRads < p1.mRads &&
+					p1.mRads - point.mRads < ANGLE_THRESHOLD) {
 				return true;
 			}
 		}
@@ -516,12 +462,27 @@ public class circle extends View {
 	}
 
 	/**
-	 * returns the difference between two radian values
-	 * @param r1 The first angle
-	 * @param r2 The second angle
+	 * returns the difference between two radian values, negative if end is
+	 * under pi rads away from start, ccw, positive otherwise.
+	 * @param start The first angle
+	 * @param end The second angle
 	 */
-	private double getDifference(double r1, double d2) {
-		return (r1-d2);
+	private double getDifference(double start, double end) {
+		// if result is greater than pi, subtract it from 2pi.
+		double diff;
+		//edge case from -pi to pi
+		if (end < 0 && start > 0) {
+			diff = Math.PI - start + Math.PI + end;
+		}
+		// reverse case - start is on top, end is on bottom. Also handles the
+		// regular case.
+		else {
+			diff = end - start;
+		}
+		if (diff > Math.PI) {
+			diff = diff-Math.PI*2; // negative because it's in ccw rotation
+		}
+		return diff;
 	}
 
 
@@ -571,14 +532,36 @@ public class circle extends View {
 
 					// difference between the current position being touched
 					// and the last position
-					double degreeDifference = getDifference(curRad, lastRad);
+					double radDifference = getDifference(lastRad, curRad);
 
 					// have we moved clockwise?
 					boolean clockwise = movingClockwise(lastRad, curRad);
 
-					Log.d(TAG, "Has Point in front? : " +hasPointInFront(p));
-					Log.d(TAG, "moving from " +lastRad +" to " +curRad);
-					//Log.d(TAG, "CLOCKWISE IS: " +clockwise);
+					if (clockwise) {
+						Log.d(TAG, "CLOCKWISE");
+					} else{
+						Log.d(TAG, "NOT CLOCKWISE");
+					}
+
+
+					// if clockwise and points in front, move everything.
+					if (clockwise && hasPointInFront(p)) {
+						for (TouchPoint pt : mPoints) {
+							if (!pt.isBeingTouched && hasPointBehind(pt)) {
+								Log.d(TAG, "hasPointInFront");
+								pt.moveRads(radDifference);
+								//pt.mRads += radDifference;
+							}
+						}
+					} else if (!clockwise && hasPointBehind(p)) {
+						for (TouchPoint pt : mPoints) {
+							if(!pt.isBeingTouched && hasPointInFront(pt)) {
+								Log.d(TAG, "hasPointBehind");
+								pt.moveRads(radDifference);
+							}
+						}
+					}
+
 
 					inScroll = true;
 					invalidate();
