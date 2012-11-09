@@ -1,6 +1,7 @@
 package edu.madcourse.circletouch;
 import java.util.ArrayList;
-import java.util.List;
+import java.util.Collections;
+import java.util.Comparator;
 
 import edu.madcourse.circletouch.R;
 import android.content.Context;
@@ -47,7 +48,7 @@ public class circle extends View {
   private float mCircleRadius;
 
   // angle stuff
-  private final double ANGLE_THRESHOLD = 0.174532;
+  private final double ANGLE_THRESHOLD = 0.349064;
 
   // touchPoint info
   private int mTouchPointRadius;
@@ -62,6 +63,7 @@ public class circle extends View {
   private Paint mCirclePaint;
   private Paint mTouchPointPaint;
   private Paint mSeparatorLinesPaint;
+  @SuppressWarnings("unused")
   private Context mContext;
 
   /**
@@ -97,7 +99,7 @@ public class circle extends View {
     try {
       // resolve values from the typedarray and store into fields
       mTouchPointRadius = 
-        a.getInteger(R.styleable.circle_touchPointRadius, 40);
+        a.getInteger(R.styleable.circle_touchPointRadius, 15);
       mTouchPointColor = 
         a.getInteger(R.styleable.circle_touchPointColor,0xffff0000); 
 
@@ -314,7 +316,7 @@ public class circle extends View {
   /**
    * Container for touch points
    */
-  private class TouchPoint {
+  private class TouchPoint implements Comparable<TouchPoint> {
     public double mRads;
     public boolean isBeingTouched = false;
 
@@ -329,7 +331,31 @@ public class circle extends View {
         mRads += rads;
       }
     }
+
+    @Override
+      /**
+       * positive if getDifference(this, tp) is positive, 0 if it's 0,
+       * negative if it's negative.
+       * @param tp The touchpoint to compare this to
+       */
+      public int compareTo(TouchPoint tp) throws ClassCastException {
+        if (getDifference(this.mRads, tp.mRads) == 0) {
+          return 0;
+        } else {
+          return getDifference(this.mRads, tp.mRads) > 0 ? 1 : -1;
+        }
+      }
   }
+
+  /**
+   * Comparator for TouchPoints
+   */
+  private class TouchPointComparator implements Comparator<TouchPoint> {
+    public int compare(TouchPoint tp1, TouchPoint tp2) {
+      return tp1.compareTo(tp2);
+    }
+  }
+
 
   /**
    * returns true if the given x and y coords are "inside" of point p - in 
@@ -348,8 +374,6 @@ public class circle extends View {
   }
 
   /**
-   * TODO:
-   * This should be changed because we only use it with the motionevent values.
    * returns true if d1 is within 30 degrees in front of d2
    * @param start the reference radian value
    * @param start the radian value to check the position of
@@ -382,7 +406,6 @@ public class circle extends View {
     return false;
   }
 
-  // TODO: change this to handle radians
   /**
    * returns true if the given point has another point in behind it
    * (counter-clockwise) within 10 degrees or less - should only be called if 
@@ -427,7 +450,25 @@ public class circle extends View {
     return diff;
   }
 
+  /**
+   * Returns true if rm is in the arc that is less than pi between r1 and r2.
+   * r1 is start, r2 is end, we're testing to see if rm is in the middle.
+   */
+  private boolean isBetween(double r1, double rm, double r2) {
+    // if the arc from r1 to r2 is less than pi but greater than 0
+    if (movingClockwise(r1, r2)){
+      // if the arc from rm to r2 is + but less than the arc from r2 to r1
+      if (getDifference(r1, rm) > 0) {
+        return (getDifference(r1, rm) < getDifference(r1, r2));
+      } else {
+        return false;
+      }
+    } else {
+      return false;
+    }
+  }
 
+  /*
   /**
    * Handles when the scroll movement is finished
    */
@@ -452,40 +493,58 @@ public class circle extends View {
           float distanceX,
           float distanceY) {
 
-        //TODO: is this the correct way to generate the last point touched?
-        // calculate the last point in the scroll
         float lastX = e2.getX() + distanceX;
         float lastY = e2.getY() + distanceY;
 
-        // let's mark the point we're touching
+        // calculate the degree values of the last touch event and the 
+        // current touch event
+        double lastRad = coordsToRads(lastX, lastY);
+        double curRad = coordsToRads(e2.getX(), e2.getY());
+
+        // difference between the current position being touched
+        // and the last position
+        double radDifference = getDifference(lastRad, curRad);
+
+        // have we moved clockwise?
+        boolean clockwise = movingClockwise(lastRad, curRad);
+
+        // handle if we're moving the cursor too fast to check collisions
+        ArrayList<TouchPoint> betweeners = new ArrayList<TouchPoint>();
+        // make a copy of mPoints to avoid a concurrentModificationException
+        ArrayList<TouchPoint> currentPoints = 
+          new ArrayList<TouchPoint>();
+        currentPoints.addAll(mPoints);
+
+        // try to move this to the for loop down there?
+        if (inScroll) {
+
+          for (TouchPoint pt : currentPoints) {
+            // if pt is between the last angle and the current one
+            if (isBetween(lastRad, pt.mRads, curRad)) {
+              Log.d(TAG, pt.mRads + " is inbetween " +lastRad +" and " +curRad);
+              betweeners.add(pt);
+              mPoints.remove(pt);
+            }
+          }
+          // sort the betweeners by closest to lastRad
+          Collections.sort(betweeners, new TouchPointComparator());
+          for (int i = 0; i < betweeners.size(); i++) {
+            betweeners.get(i).moveRads(curRad + i*ANGLE_THRESHOLD);
+            mPoints.add(betweeners.get(i));
+          }
+        }
+
+        // normal touch handling
         for (TouchPoint p : mPoints ){
-          // if the first touch point is touching a point, then...
+          // if we're touching this point
           if (isTouchingThisPoint(e1.getX(), e1.getY(), p)) {
             inScroll = true;
             p.isBeingTouched = true;
-            // otherwise, if the point "isbeingtouched"...
+            // if the point "isbeingtouched"...
           } if (p.isBeingTouched) {
             p.mRads = coordsToRads(e2.getX(), e2.getY());
 
-            // calculate the degree values of the last touch event and the 
-            // current touch event
-            double lastRad = coordsToRads(lastX, lastY);
-            double curRad = coordsToRads(e2.getX(), e2.getY());
-
-            // difference between the current position being touched
-            // and the last position
-            double radDifference = getDifference(lastRad, curRad);
-
-            // have we moved clockwise?
-            boolean clockwise = movingClockwise(lastRad, curRad);
-
-            if (clockwise) {
-              Log.d(TAG, "CLOCKWISE");
-            } else{
-              Log.d(TAG, "NOT CLOCKWISE");
-            }
-
-
+            // handling points in front and behind in normal, slow motion.
             // if clockwise and points in front, move everything.
             if (clockwise && hasPointInFront(p)) {
               for (TouchPoint pt : mPoints) {
