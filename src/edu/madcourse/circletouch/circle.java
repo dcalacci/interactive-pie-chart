@@ -355,6 +355,8 @@ public class circle extends View {
 	 * @param category - One of: Protein, Grains, Vegetable, Oil/Fat/Sweets, Dairy, Fruits	
 	 * @param color - Color of the slice 
 	 */
+	
+	//foo
 	private class Category {
 		private TouchPoint pCCW;
 		private TouchPoint pCW;

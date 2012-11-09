@@ -7,7 +7,7 @@
     android:layout_height="fill_parent"
     android:background="@color/Background"
     android:orientation="vertical"
-    android:weightSum="1.0"
+    android:weightSum="1.00"
     tools:context=".circletouchActivity" >
 
     <edu.madcourse.circletouch.circle
