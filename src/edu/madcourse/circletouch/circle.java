@@ -538,7 +538,25 @@ public class circle extends View {
     inScroll = false;
   }
 
-
+//TODO
+//notes
+// maybe we could also enforce two invariants:
+// 1.  mPoints is always ordered from least to greatest rotation, going 
+//  clockwise, starting from due east(0c)
+// 2.  There is always, at minimum, an ANGLE_THRESHOLD rotation distance
+//  between any two given points
+// --how to enforce?
+//  when adding a new element, enforce the first invariant/second invariant by
+//    default
+//  when scrolling, USE the invariant in a useful way 
+//  when scrolling, enforce the invariant using the invariants:
+//    because points are sorted by rotation:
+//    if we're scrolling and moving clockwise and have a point inFront of us, 
+//    that point has the current touch point behind it.  if that point is
+//    ANGLE_THRESHOLD behind another point, the second point shold be 
+//    i*ANGLE_THRESHOLD away from the current touched point, where i is the 
+//    index of the point in question(the farther one).
+//    PROBLEMS: edge case(s) of -pi to +pi.
 
   /**
    * let's track some gestures
@@ -593,14 +611,19 @@ public class circle extends View {
                   return true;
                 }*/
 
+                // if there's a point behind pt and it's not being touched
                 if (!pt.isBeingTouched && hasPointBehind(pt)) {
-                  pt.mRads = moveRadCW(curRad, ANGLE_THRESHOLD);
+                  TouchPoint pb = pointBehind(pt);
+                  pt.mRads = moveRadCW(pb.mRads, ANGLE_THRESHOLD);
+                  //pt.mRads = moveRadCW(curRad, ANGLE_THRESHOLD);
                 }
               }
             } else if (!clockwise && hasPointBehind(p)) {
               for (TouchPoint pt : mPoints) {
                 if(!pt.isBeingTouched && hasPointInFront(pt)) {
-                  pt.mRads = moveRadCCW(p.mRads, ANGLE_THRESHOLD);
+                  TouchPoint pf = pointInFront(pt);
+                  pt.mRads = moveRadCCW(pf.mRads, ANGLE_THRESHOLD);
+                  /*pt.mRads = moveRadCCW(p.mRads, ANGLE_THRESHOLD);*/
                 }
               }
             }
