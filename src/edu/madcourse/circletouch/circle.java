@@ -113,6 +113,8 @@ public class circle extends View {
           "mTouchPointRadius is: " + mTouchPointRadius);
       Log.d(TAG, 
           "mTouchPointColor is: " + mTouchPointColor);
+      boolean what = isBetween(0, Math.PI/3, Math.PI/2);
+      Log.d(TAG, "did it work? :" +what);
     }
 
     // initialize everything
@@ -320,18 +322,6 @@ public class circle extends View {
     public double mRads;
     public boolean isBeingTouched = false;
 
-    /**
-     * Moves this touchPoint clockwise the given number of radians
-     */
-    public void moveRads(double rads) {
-      mRads += rads;
-      // if we're going from + to -
-      if (Math.abs(mRads) > Math.PI) {
-        mRads *= -1;
-        mRads += rads;
-      }
-    }
-
     @Override
       /**
        * positive if getDifference(this, tp) is positive, 0 if it's 0,
@@ -350,9 +340,46 @@ public class circle extends View {
   /**
    * Comparator for TouchPoints
    */
+  @SuppressWarnings("unused")
   private class TouchPointComparator implements Comparator<TouchPoint> {
     public int compare(TouchPoint tp1, TouchPoint tp2) {
       return tp1.compareTo(tp2);
+    }
+  }
+
+  /**
+   * Moves start delta degrees clockwise
+   * @param start The start angle in radians
+   * @param delta The amount to rotate start by
+   */
+  public double moveRadCW(double start, double delta) {
+    // if we're going from + to - (bottom to top)
+    if (start + delta > Math.PI) {
+      Log.d(TAG, "Moving clockwise, going to other half...");
+      double radsUntilPI = Math.PI - start;
+      delta -= radsUntilPI;
+      return -1*(Math.PI - delta);
+    } else {
+      start += delta;
+      return start;
+    }
+  }
+
+  /**
+   * Moves start by delta degrees counter clockwise
+   * @param start The start angle in radians
+   * @param delta The amount to rotate start by
+   */
+  public double moveRadCCW(double start, double delta) {
+    // from negative to positive (top to bottom)
+    if (start - delta < Math.PI && start < 0) {
+      Log.d(TAG, "Moving ccw, going to other half...");
+      double radsUntilPI = Math.PI + start;
+      delta -= radsUntilPI;
+      return Math.PI - delta;
+    } else {
+      start -= delta;
+      return start;
     }
   }
 
@@ -379,10 +406,7 @@ public class circle extends View {
    * @param start the radian value to check the position of
    */
   private boolean movingClockwise(double start, double end) {
-
     double diff = getDifference(start, end);
-    // Log.d(TAG, "CLOCKWISE: starting at " +start +", ending at: "+end);
-    // Log.d(TAG, "CLOCKWISE: diff is " +diff);
     return diff > 0;
   }
 
@@ -416,15 +440,44 @@ public class circle extends View {
     for (TouchPoint point : mPoints) {
       // edge case
       if (point.mRads > 0 && p1.mRads < 0 &&
-          (Math.PI - point.mRads + Math.PI + p1.mRads < ANGLE_THRESHOLD)) {
+          (Math.PI - point.mRads + Math.PI + p1.mRads <= ANGLE_THRESHOLD)) {
         return true;
       } else if (point.mRads < p1.mRads &&
-          p1.mRads - point.mRads < ANGLE_THRESHOLD) {
+          p1.mRads - point.mRads <= ANGLE_THRESHOLD) {
         return true;
           }
     }
     return false;
   }
+
+  private TouchPoint pointBehind(TouchPoint p1) {
+    for (TouchPoint point : mPoints) {
+      // edge case
+      if (point.mRads > 0 && p1.mRads < 0 &&
+          (Math.PI - point.mRads + Math.PI + p1.mRads <= ANGLE_THRESHOLD)) {
+        return point;
+      } else if (point.mRads < p1.mRads &&
+          p1.mRads - point.mRads <= ANGLE_THRESHOLD) {
+        return point;
+          }
+    }
+    throw new RuntimeException("No point behind " +p1.toString());
+  }
+
+  private TouchPoint pointInFront(TouchPoint p1) {
+        for (TouchPoint point : mPoints) {
+      // edge case
+      if (point.mRads < 0 && p1.mRads > 0 &&
+          ((Math.PI + point.mRads + Math.PI - p1.mRads) < ANGLE_THRESHOLD)) {
+        return point;
+      } else if (point.mRads > p1.mRads &&
+          point.mRads - p1.mRads < ANGLE_THRESHOLD) {
+        return point;
+          }
+    }
+    throw new RuntimeException("No point in front of " + p1.toString());
+  }
+
 
   /**
    * returns the difference between two radian values, negative if end is
@@ -439,8 +492,7 @@ public class circle extends View {
     if (end < 0 && start > 0) {
       diff = Math.PI - start + Math.PI + end;
     }
-    // reverse case - start is on top, end is on bottom. Also handles the
-    // regular case.
+    // reverse case - start is on top, end is on bottom. Also handles reg. case
     else {
       diff = end - start;
     }
@@ -453,13 +505,20 @@ public class circle extends View {
   /**
    * Returns true if rm is in the arc that is less than pi between r1 and r2.
    * r1 is start, r2 is end, we're testing to see if rm is in the middle.
+   * @param r1 The first angle
+   * @param rm The angle in question
+   * @param r2 The second angle
    */
   private boolean isBetween(double r1, double rm, double r2) {
     // if the arc from r1 to r2 is less than pi but greater than 0
     if (movingClockwise(r1, r2)){
       // if the arc from rm to r2 is + but less than the arc from r2 to r1
       if (getDifference(r1, rm) > 0) {
-        return (getDifference(r1, rm) < getDifference(r1, r2));
+        if( (getDifference(r1, rm) < getDifference(r1, r2))) {
+          Log.d(TAG, rm + " IS BETWEEN " + r1 +" AND " +r2);
+          return true;
+        }
+        else { return false; }
       } else {
         return false;
       }
@@ -504,35 +563,11 @@ public class circle extends View {
         // difference between the current position being touched
         // and the last position
         double radDifference = getDifference(lastRad, curRad);
+        double firstRad = coordsToRads(e1.getX(), e1.getY());
 
         // have we moved clockwise?
         boolean clockwise = movingClockwise(lastRad, curRad);
-
-        // handle if we're moving the cursor too fast to check collisions
-        ArrayList<TouchPoint> betweeners = new ArrayList<TouchPoint>();
-        // make a copy of mPoints to avoid a concurrentModificationException
-        ArrayList<TouchPoint> currentPoints = 
-          new ArrayList<TouchPoint>();
-        currentPoints.addAll(mPoints);
-
-        // try to move this to the for loop down there?
-        if (inScroll) {
-
-          for (TouchPoint pt : currentPoints) {
-            // if pt is between the last angle and the current one
-            if (isBetween(lastRad, pt.mRads, curRad)) {
-              Log.d(TAG, pt.mRads + " is inbetween " +lastRad +" and " +curRad);
-              betweeners.add(pt);
-              mPoints.remove(pt);
-            }
-          }
-          // sort the betweeners by closest to lastRad
-          Collections.sort(betweeners, new TouchPointComparator());
-          for (int i = 0; i < betweeners.size(); i++) {
-            betweeners.get(i).moveRads(curRad + i*ANGLE_THRESHOLD);
-            mPoints.add(betweeners.get(i));
-          }
-        }
+        Log.d(TAG, "Clockwise: " +clockwise);
 
         // normal touch handling
         for (TouchPoint p : mPoints ){
@@ -543,22 +578,29 @@ public class circle extends View {
             // if the point "isbeingtouched"...
           } if (p.isBeingTouched) {
             p.mRads = coordsToRads(e2.getX(), e2.getY());
+            Log.d(TAG, "last: " + lastRad);
+            Log.d(TAG, "diff: " + radDifference);
+            Log.d(TAG, "curr: " + curRad);
 
             // handling points in front and behind in normal, slow motion.
             // if clockwise and points in front, move everything.
             if (clockwise && hasPointInFront(p)) {
               for (TouchPoint pt : mPoints) {
+                /*if (!pt.isBeingTouched && isBetween(lastRad, pt.mRads, curRad)) {
+                  Log.d(TAG, ">>>>>Skipped a point...");
+                  //pt.mRads = moveRadCW(curRad, ANGLE_THRESHOLD);
+                  onScrollFinished();
+                  return true;
+                }*/
+
                 if (!pt.isBeingTouched && hasPointBehind(pt)) {
-                  Log.d(TAG, "hasPointInFront");
-                  pt.moveRads(radDifference);
-                  //pt.mRads += radDifference;
+                  pt.mRads = moveRadCW(curRad, ANGLE_THRESHOLD);
                 }
               }
             } else if (!clockwise && hasPointBehind(p)) {
               for (TouchPoint pt : mPoints) {
                 if(!pt.isBeingTouched && hasPointInFront(pt)) {
-                  Log.d(TAG, "hasPointBehind");
-                  pt.moveRads(radDifference);
+                  pt.mRads = moveRadCCW(p.mRads, ANGLE_THRESHOLD);
                 }
               }
             }
