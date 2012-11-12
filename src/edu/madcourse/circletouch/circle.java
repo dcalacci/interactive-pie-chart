@@ -289,10 +289,10 @@ public class circle extends View {
     addItem(Math.PI);
     addItem(Math.PI/2);
     addItem(Math.PI/3);
-    //addItem(-1*Math.PI/2);
+    addItem(-1*Math.PI/2);
 
     printTouchPoints();
-    SortByDistance(mPoints, 0);
+    sortListCW(mPoints, 0);
     printTouchPoints();
 
     // set up the gesture detector
@@ -356,7 +356,6 @@ public class circle extends View {
   public double moveRadCW(double start, double delta) {
     // if we're going from + to - (bottom to top)
     if (start + delta > Math.PI) {
-      Log.d(TAG, "Moving clockwise, going to other half...");
       double radsUntilPI = Math.PI - start;
       delta -= radsUntilPI;
       return -1*(Math.PI - delta);
@@ -374,7 +373,6 @@ public class circle extends View {
   public double moveRadCCW(double start, double delta) {
     // from negative to positive (top to bottom)
     if (start - delta < Math.PI && start < 0) {
-      Log.d(TAG, "Moving ccw, going to other half...");
       double radsUntilPI = Math.PI + start;
       delta -= radsUntilPI;
       return Math.PI - delta;
@@ -421,7 +419,7 @@ public class circle extends View {
     for (TouchPoint point : mPoints) {
       // edge case
       if (point.mRads < 0 && p1.mRads > 0 &&
-          ((Math.PI + point.mRads + Math.PI - p1.mRads) < ANGLE_THRESHOLD)) {
+          ((Math.PI + point.mRads + Math.PI - p1.mRads) <= ANGLE_THRESHOLD)) {
         return true;
       } else if (point.mRads > p1.mRads &&
           point.mRads - p1.mRads < ANGLE_THRESHOLD) {
@@ -528,12 +526,9 @@ public class circle extends View {
     }
   }
   private boolean hasPassed(double r1, double rm, double r2) {
-    Log.d(TAG, "haspassed>>>>>>HASPASSED CALLED");
     if (movingClockwise(r1, r2)) {
-      Log.d(TAG, "haspassed>>>>>>>>CLOCKWISE");
       if (getDifference(r1, rm) > 0 &&
           getDifference(r2, rm) < 0) {
-        Log.d(TAG, "haspassed>>>>>>>TRUE");
         return true;
           }
     }
@@ -542,11 +537,11 @@ public class circle extends View {
 
   /** 
    * on my anonymous inner class grind - this sorts the given arraylist by
-   * the rotation distance from refRad to each touchPoint in the list
+   * the rotation distance from refRad to each touchPoint, clockwise.
    * @param pts The arrayList to sort
    * @param refRad The referance radian measurement
    */
-  private void SortByDistance(
+  private void sortListCW(
       ArrayList<TouchPoint> pts,
       final double refRad) {
 
@@ -568,6 +563,33 @@ public class circle extends View {
     );
       }
 
+  /** 
+   * on my anonymous inner class grind - this sorts the given arraylist by
+   * the rotation distance from refRad to each touchPoint, counter-clockwise.
+   * @param pts The arrayList to sort
+   * @param refRad The referance radian measurement
+   */
+  private void sortListCCW(
+      ArrayList<TouchPoint> pts,
+      final double refRad) {
+
+    Collections.sort( pts, 
+        new Comparator<TouchPoint>() {
+          public int compare(TouchPoint a, TouchPoint b) {
+            // difference is >0 if clockwise, <0 if not.
+            double aDiff = getDifference(refRad, a.mRads);
+            double bDiff = getDifference(refRad, b.mRads);
+            if (aDiff < 0) {
+              aDiff = Math.PI*2 + aDiff;
+            }
+            if (bDiff < 0) {
+              bDiff = Math.PI*2 + bDiff;
+            }
+            return (aDiff > bDiff ? -1 : (aDiff == bDiff ? 0 : 1));
+          }
+    }
+    );
+      }
   /*
   /**
    * Handles when the scroll movement is finished
@@ -629,7 +651,6 @@ public class circle extends View {
 
         // have we moved clockwise?
         boolean clockwise = movingClockwise(lastRad, curRad);
-        Log.d(TAG, "Clockwise: " +clockwise);
 
         // normal touch handling
         for (TouchPoint p : mPoints ){
@@ -644,8 +665,8 @@ public class circle extends View {
             Log.d(TAG, "diff: " + radDifference);
             Log.d(TAG, "curr: " + curRad);
 
-            // keep 'em in line
-            SortByDistance(mPoints, p.mRads);
+            // keep 'em in line, cw
+            sortListCW(mPoints, p.mRads);
 
             // handling keeping the buffer distance with jumps
             // This code uses the ordering of mPoints to 
@@ -654,32 +675,50 @@ public class circle extends View {
               // normal movement, using the ordering of the elements, from
               // the current touchPoint
               //cw
-              if (!pt.isBeingTouched && hasPassed(
-                    lastRad, 
-                    pt.mRads, 
-                    moveRadCW(curRad, ANGLE_THRESHOLD))) {
-                pt.mRads = moveRadCW( curRad, mPoints.indexOf(pt)*ANGLE_THRESHOLD);
-                //ccw
-              } else if (!pt.isBeingTouched && hasPassed(
-                    moveRadCCW(curRad, ANGLE_THRESHOLD),
-                    pt.mRads,
-                    lastRad)) {
-                int ccwIndex = mPoints.size() - mPoints.indexOf(pt);
-                pt.mRads = moveRadCCW( curRad, ccwIndex*ANGLE_THRESHOLD);
+              if (clockwise) {
+                // normal movement using ordering of the elements
+                if (!pt.isBeingTouched && hasPassed(
+                      lastRad, 
+                      pt.mRads, 
+                      moveRadCW(curRad, ANGLE_THRESHOLD))) {
+                  Log.d(TAG, "Moving Clockwise!");
+                  pt.mRads = moveRadCW( curRad, mPoints.indexOf(pt)*ANGLE_THRESHOLD);
+                  //ccw
+                      }
+                if ( !pt.isBeingTouched && hasPointBehind(pt) ) {
+                  double prevPointRads = mPoints.get(mPoints.indexOf(pt)-1).mRads;
+                  pt.mRads = moveRadCW(prevPointRads, ANGLE_THRESHOLD);
+                }
+              } else {
+                // making a CCW-ordered arrayList, since we're moving CCW.
+                ArrayList<TouchPoint> CCWList = new ArrayList<TouchPoint>();
+                CCWList.addAll(mPoints.subList(1, mPoints.size()));
+                Collections.reverse(CCWList);
+                CCWList.add(0, mPoints.get(0));
+                Log.d(TAG, "Moving Counter-Clockwise!");
+
+                // normal movement using ordering of the elements
+                if (!pt.isBeingTouched && hasPassed(
+                      moveRadCCW(curRad, ANGLE_THRESHOLD),
+                      pt.mRads,
+                      lastRad)) {
+                  int ccwIndex = CCWList.indexOf(pt);
+                  pt.mRads = moveRadCCW( curRad, ccwIndex*ANGLE_THRESHOLD);
+                  //pt.mRads = moveRadCCW( curRad, ccwIndex*ANGLE_THRESHOLD);
+                      }
+                if ( !pt.isBeingTouched && hasPointInFront(pt)) {
+                  double nextPointRads = CCWList.get(CCWList.indexOf(pt)-1).mRads;
+                  pt.mRads = moveRadCCW(nextPointRads, ANGLE_THRESHOLD);
                     }
-              if ( !pt.isBeingTouched && hasPointBehind(pt) ) {
-                double prevPointRads = mPoints.get(mPoints.indexOf(pt)-1).mRads;
-                pt.mRads = moveRadCW(prevPointRads, ANGLE_THRESHOLD);
               }
+
 
               // cw and then ccw 'jumping'
               if (!pt.isBeingTouched && hasPassed(lastRad, pt.mRads, curRad)) {
-                Log.d(TAG, ">>>>>>Skipped a point...CW");
                 pt.mRads = moveRadCW(
                     curRad, 
                     mPoints.indexOf(pt)*ANGLE_THRESHOLD);
               } else if (!pt.isBeingTouched && hasPassed(curRad, pt.mRads, lastRad)) {
-                Log.d(TAG, ">>>>>>>Skipped a point...CCW");
                 pt.mRads = moveRadCCW(curRad, ANGLE_THRESHOLD);
               }
             }
