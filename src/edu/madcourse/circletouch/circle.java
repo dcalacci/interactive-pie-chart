@@ -173,7 +173,7 @@ public class circle extends View {
 	protected void onDraw(Canvas canvas) {
 		super.onDraw(canvas);
 		this.canvas = canvas;
-
+		Log.d(TAG, "mPoints :" + mPoints.toString());
 		for (TouchPoint point : mPoints) {
 			PointF touchPointCoords = radsToPointF(point.mRads);
 
@@ -205,6 +205,7 @@ public class circle extends View {
 					mSeparatorLinesPaint
 					);
 		}
+		
 	}
 
 	/**
@@ -349,7 +350,7 @@ public class circle extends View {
 		addCategoryHelper(null, null, category, color);
 		addPoints();		
 	}
-	
+
 	/**
 	 * Adds points to the charts
 	 */
@@ -408,8 +409,13 @@ public class circle extends View {
 			}
 		}
 		mCategories.remove(index);
-		addPoints();
-		setPointsToCategories();
+		if(mCategories.size() < 2){
+			clearPoints();
+			Log.d(TAG, "ALL GONE: " + mPoints.toString());
+		}else{
+			addPoints();
+			setPointsToCategories();
+		}
 	}
 
 	/**
@@ -496,7 +502,7 @@ public class circle extends View {
 		String category = "Protein";
 		TextView box = (TextView) v.findViewById(R.id.protein_box);
 		TextView text = (TextView) v.findViewById(R.id.protein_label);
-		
+
 		boolean inList = isCategoryinList(category);
 
 		if(inList){
@@ -509,8 +515,8 @@ public class circle extends View {
 			box.setBackgroundColor(getResources().getColor(R.color.Protein));
 			text.setTextColor(getResources().getColor(R.color.Protein));
 			addCategory(category, getResources().getColor(R.color.Protein));
-		}		
-		Log.d(TAG, "Categories :" + mCategories.get(0).getpCCW().toString());
+		}		 
+		invalidate();
 	}
 
 	public void onVegetableClicked(View v){
@@ -531,6 +537,7 @@ public class circle extends View {
 			text.setTextColor(getResources().getColor(R.color.Vegetable));
 			addCategory(category, getResources().getColor(R.color.Vegetable));
 		}	
+		invalidate();
 	}
 
 	public void onDairyClicked(View v){
@@ -551,6 +558,7 @@ public class circle extends View {
 			text.setTextColor(getResources().getColor(R.color.Dairy));
 			addCategory(category, getResources().getColor(R.color.Dairy));
 		}	
+		invalidate();
 	}
 
 	public void onFruitClicked(View v){
@@ -570,7 +578,8 @@ public class circle extends View {
 			box.setBackgroundColor(getResources().getColor(R.color.Fruit));
 			text.setTextColor(getResources().getColor(R.color.Fruit));
 			addCategory(category, getResources().getColor(R.color.Fruit));
-		}	
+		}
+		invalidate();
 	}
 
 	public void onGrainClicked(View v){
@@ -591,6 +600,7 @@ public class circle extends View {
 			text.setTextColor(getResources().getColor(R.color.Grain));
 			addCategory(category, getResources().getColor(R.color.Grain));
 		}	
+		invalidate();
 	}
 
 	public void onOilSugarClicked(View v){
@@ -611,6 +621,7 @@ public class circle extends View {
 			text.setTextColor(getResources().getColor(R.color.Oil_Sugar));
 			addCategory(category, getResources().getColor(R.color.Oil_Sugar));
 		}	
+		invalidate();
 	}
 
 
