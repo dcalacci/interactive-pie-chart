@@ -526,6 +526,27 @@ public class circle extends View {
       return false;
     }
   }
+  private boolean hasPassed(double r1, double rm, double r2) {
+    Log.d(TAG, "haspassed>>>>>>HASPASSED CALLED");
+    if (movingClockwise(r1, r2)) {
+      Log.d(TAG, "haspassed>>>>>>>>CLOCKWISE");
+      if (getDifference(r1, rm) > 0 &&
+          getDifference(r2, rm) < 0) {
+        Log.d(TAG, "haspassed>>>>>>>TRUE");
+        return true;
+          }
+    }
+    return false;
+  }
+    /*} else {
+      Log.d(TAG, "haspassed>>>>>>COUNTERCLOCKWISE");
+      if (getDifference(r2, rm) > 0 &&
+          getDifference(r1, rm) < 0) {
+        return true;
+          }
+      return false;
+    }*/
+
 
   /*
   /**
@@ -549,7 +570,7 @@ public class circle extends View {
 //  when adding a new element, enforce the first invariant/second invariant by
 //    default
 //  when scrolling, USE the invariant in a useful way 
-//  when scrolling, enforce the invariant using the invariants:
+//  when scrolling, enforce the invariant BY USING using the invariants:
 //    because points are sorted by rotation:
 //    if we're scrolling and moving clockwise and have a point inFront of us, 
 //    that point has the current touch point behind it.  if that point is
@@ -557,6 +578,8 @@ public class circle extends View {
 //    i*ANGLE_THRESHOLD away from the current touched point, where i is the 
 //    index of the point in question(the farther one).
 //    PROBLEMS: edge case(s) of -pi to +pi.
+//  other ideas: when we're scrolling, invariant is that the points are ordered
+//  by cw distance from the point being touched?
 
   /**
    * let's track some gestures
@@ -600,11 +623,29 @@ public class circle extends View {
             Log.d(TAG, "diff: " + radDifference);
             Log.d(TAG, "curr: " + curRad);
 
+            // handling keeping the buffer distance
+            for ( TouchPoint pt : mPoints) {
+                if (!pt.isBeingTouched && hasPassed(lastRad, pt.mRads, curRad)) {
+                  Log.d(TAG, ">>>>>>Skipped a point...CW");
+                  pt.mRads = moveRadCW(curRad, ANGLE_THRESHOLD);
+                  return true;
+                } else if (!pt.isBeingTouched && hasPassed(curRad, pt.mRads, lastRad)) {
+                  Log.d(TAG, ">>>>>>>Skippted a point...CCW");
+                  pt.mRads = moveRadCCW(curRad, ANGLE_THRESHOLD);
+                  return true;
+                }
+            }
+
             // handling points in front and behind in normal, slow motion.
             // if clockwise and points in front, move everything.
             if (clockwise && hasPointInFront(p)) {
               for (TouchPoint pt : mPoints) {
-                /*if (!pt.isBeingTouched && isBetween(lastRad, pt.mRads, curRad)) {
+                /*if (!pt.isBeingTouched && hasPassed(lastRad, pt.mRads, curRad)) {
+                  Log.d(TAG, ">>>>>>Skipped a point...");
+                  pt.mRads = moveRadCW(curRad, ANGLE_THRESHOLD);
+                  return true;
+                }
+                if (!pt.isBeingTouched && isBetween(lastRad, pt.mRads, curRad)) {
                   Log.d(TAG, ">>>>>Skipped a point...");
                   //pt.mRads = moveRadCW(curRad, ANGLE_THRESHOLD);
                   onScrollFinished();
