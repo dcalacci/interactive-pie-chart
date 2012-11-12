@@ -648,10 +648,23 @@ public class circle extends View {
             SortByDistance(mPoints, p.mRads);
 
             // handling keeping the buffer distance with jumps
+            // This code uses the ordering of mPoints to 
+            // enforce the buffer space between points.
             for ( TouchPoint pt : mPoints) {
-              if (!pt.isBeingTouched && hasPassed(lastRad, pt.mRads, curRad+ANGLE_THRESHOLD)) {
+              //cw
+              if (!pt.isBeingTouched && hasPassed(
+                    lastRad, 
+                    pt.mRads, 
+                    moveRadCW(curRad, ANGLE_THRESHOLD))) {
                 pt.mRads = moveRadCW( curRad, mPoints.indexOf(pt)*ANGLE_THRESHOLD);
-              }
+                //ccw
+              } else if (!pt.isBeingTouched && hasPassed(
+                    moveRadCCW(curRad, ANGLE_THRESHOLD),
+                    pt.mRads,
+                    lastRad)) {
+                int ccwIndex = mPoints.size() - mPoints.indexOf(pt);
+                pt.mRads = moveRadCCW( curRad, ccwIndex*ANGLE_THRESHOLD);
+                    }
               // cw and then ccw 'jumping'
               if (!pt.isBeingTouched && hasPassed(lastRad, pt.mRads, curRad)) {
                 Log.d(TAG, ">>>>>>Skipped a point...CW");
@@ -659,7 +672,7 @@ public class circle extends View {
                     curRad, 
                     mPoints.indexOf(pt)*ANGLE_THRESHOLD);
               } else if (!pt.isBeingTouched && hasPassed(curRad, pt.mRads, lastRad)) {
-                Log.d(TAG, ">>>>>>>Skippted a point...CCW");
+                Log.d(TAG, ">>>>>>>Skipped a point...CCW");
                 pt.mRads = moveRadCCW(curRad, ANGLE_THRESHOLD);
               }
             }
