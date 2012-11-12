@@ -643,14 +643,21 @@ public class circle extends View {
             Log.d(TAG, "last: " + lastRad);
             Log.d(TAG, "diff: " + radDifference);
             Log.d(TAG, "curr: " + curRad);
+
+            // keep 'em in line
             SortByDistance(mPoints, p.mRads);
 
             // handling keeping the buffer distance with jumps
             for ( TouchPoint pt : mPoints) {
+              if (!pt.isBeingTouched && hasPassed(lastRad, pt.mRads, curRad+ANGLE_THRESHOLD)) {
+                pt.mRads = moveRadCW( curRad, mPoints.indexOf(pt)*ANGLE_THRESHOLD);
+              }
               // cw and then ccw 'jumping'
               if (!pt.isBeingTouched && hasPassed(lastRad, pt.mRads, curRad)) {
                 Log.d(TAG, ">>>>>>Skipped a point...CW");
-                pt.mRads = moveRadCW(curRad, ANGLE_THRESHOLD);
+                pt.mRads = moveRadCW(
+                    curRad, 
+                    mPoints.indexOf(pt)*ANGLE_THRESHOLD);
               } else if (!pt.isBeingTouched && hasPassed(curRad, pt.mRads, lastRad)) {
                 Log.d(TAG, ">>>>>>>Skippted a point...CCW");
                 pt.mRads = moveRadCCW(curRad, ANGLE_THRESHOLD);
