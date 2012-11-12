@@ -38,7 +38,9 @@
                 android:layout_width="fill_parent"
                 android:layout_height="fill_parent"
                 android:layout_gravity="fill_vertical|fill_horizontal|center"
-                android:layout_weight="0.50" >
+                android:layout_weight="0.50"
+                android:clickable="true"
+                android:onClick="onProteinClicked" >
 
                 <TextView
                     android:id="@+id/protein_label"
@@ -53,7 +55,7 @@
                     android:paddingLeft="30dp"
                     android:text="Protein"
                     android:textAppearance="?android:attr/textAppearanceMedium"
-                    android:textColor="@color/Protien_Grayed" />
+                    android:textColor="@color/Protein_Grayed" />
 
                 <TextView
                     android:id="@+id/protein_box"
@@ -61,7 +63,7 @@
                     android:layout_height="20dp"
                     android:layout_centerVertical="true"
                     android:layout_marginLeft="5dp"
-                    android:background="@color/Protien_Grayed"
+                    android:background="@color/Protein_Grayed"
                     android:paddingLeft="10dp"
                     android:textAppearance="?android:attr/textAppearanceSmall" />
             </RelativeLayout>
@@ -70,7 +72,9 @@
                 android:layout_width="fill_parent"
                 android:layout_height="fill_parent"
                 android:layout_gravity="fill_vertical|fill_horizontal|center"
-                android:layout_weight="0.50" >
+                android:layout_weight="0.50"
+                android:clickable="true"
+                android:onClick="onVegetableClicked" >
 
                 <TextView
                     android:id="@+id/vegetable_label"
@@ -109,7 +113,9 @@
                 android:layout_width="wrap_content"
                 android:layout_height="fill_parent"
                 android:layout_gravity="fill_vertical|fill_horizontal|center"
-                android:layout_weight="0.50" >
+                android:layout_weight="0.50"
+                android:clickable="true"
+                android:onClick="onDairyClicked" >
 
                 <TextView
                     android:id="@+id/dairy_label"
@@ -141,7 +147,9 @@
                 android:layout_width="match_parent"
                 android:layout_height="fill_parent"
                 android:layout_gravity="fill_vertical|fill_horizontal|center"
-                android:layout_weight="0.50" >
+                android:layout_weight="0.50"
+                android:clickable="true"
+                android:onClick="onFruitClicked" >
 
                 <TextView
                     android:id="@+id/fruit_label"
@@ -180,7 +188,9 @@
                 android:layout_width="fill_parent"
                 android:layout_height="fill_parent"
                 android:layout_gravity="fill_vertical|fill_horizontal|center"
-                android:layout_weight="0.50" >
+                android:layout_weight="0.50"
+                android:clickable="true"
+                android:onClick="onGrainClicked" >
 
                 <TextView
                     android:id="@+id/grain_label"
@@ -212,7 +222,9 @@
                 android:layout_width="fill_parent"
                 android:layout_height="fill_parent"
                 android:layout_gravity="fill_vertical|fill_horizontal|center"
-                android:layout_weight="0.50" >
+                android:layout_weight="0.50"
+                android:clickable="true"
+                android:onClick="onOilSugarClicked" >
 
                 <TextView
                     android:id="@+id/oil_label"

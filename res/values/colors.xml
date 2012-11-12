@@ -13,7 +13,7 @@
     <color name="Grain">#a0522d</color>
     
     <!-- Highlight Colors -->
-    <color name="Protien_Highlight">#ff0000</color>
+    <color name="Protein_Highlight">#ff0000</color>
     <color name="Vegetable_Highlight">#7fff00</color>
     <color name="Dairy_Highlight">#00bfff</color>
     <color name="Oil_Sugar_Highlight">#ffa500</color>
@@ -21,7 +21,7 @@
     <color name="Grain_Highlight">#d2691e</color>
     
     <!-- Grayed Colors -->
-    <color name="Protien_Grayed">#e9967a</color>
+    <color name="Protein_Grayed">#e9967a</color>
     <color name="Vegetable_Grayed">#bdb76b</color>
     <color name="Dairy_Grayed">#b0c4de</color>
     <color name="Oil_Sugar_Grayed">#ffa07a</color>

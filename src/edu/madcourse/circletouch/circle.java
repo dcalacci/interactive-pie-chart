@@ -15,6 +15,7 @@ import android.util.Log;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.View;
+import android.widget.TextView;
 
 
 //TODO
@@ -38,6 +39,7 @@ import android.view.View;
 
 public class circle extends View {
 	private String TAG = "circletouch.circle";
+	private Canvas canvas;
 	// view boundary for the circle.
 	private RectF mCircleBounds = new RectF();
 	private ArrayList<TouchPoint> mPoints = new ArrayList<TouchPoint>();
@@ -170,6 +172,7 @@ public class circle extends View {
 	 */
 	protected void onDraw(Canvas canvas) {
 		super.onDraw(canvas);
+		this.canvas = canvas;
 
 		for (TouchPoint point : mPoints) {
 			PointF touchPointCoords = radsToPointF(point.mRads);
@@ -285,9 +288,9 @@ public class circle extends View {
 		mSeparatorLinesPaint.setStyle(Paint.Style.STROKE);
 
 		// add some touch points
-		addItem(Math.PI);
-		addItem(Math.PI/2);
-		addItem(Math.PI/3);
+		//		addItem(Math.PI);
+		//		addItem(Math.PI/2);
+		//		addItem(Math.PI/3);
 
 		// set up the gesture detector
 		mGestureDetector = new GestureDetector(
@@ -313,6 +316,7 @@ public class circle extends View {
 
 		// add it to the list of points
 		mPoints.add(p);
+		invalidate();
 	}
 
 	/**
@@ -336,13 +340,86 @@ public class circle extends View {
 	}
 
 	/**
-	 * Adds categories to the list of categories
+	 * Adds category to the list of Categories
+	 * TODO: COLOR IN SLICES
+	 * @param category
+	 * @param Color
+	 */
+	private void addCategory(String category, int color){
+		addCategoryHelper(null, null, category, color);
+		addPoints();		
+	}
+	
+	/**
+	 * Adds points to the charts
+	 */
+	private void addPoints(){
+		int cSize = mCategories.size();		
+
+		double rads = (Math.PI * 2) / (cSize);
+		double rads_sum = 0;
+
+		clearPoints();
+
+		if(cSize != 1){
+			for (int i = 0; i < cSize; i++){
+				rads_sum += rads;
+				addItem(rads_sum);	
+			}
+			setPointsToCategories();
+		}
+	}
+
+	/**
+	 * Clears all the points 
+	 */
+	private void clearPoints(){
+		mPoints.clear();
+	}
+
+	/**
+	 * Sets the points associated to the category
+	 */
+	private void setPointsToCategories(){
+		int size = mPoints.size();
+		for (Category c : mCategories){
+			for(int i = 0; i < size; i++){
+				c.setpCCW(mPoints.get(i));
+				if (i == (size - 1)){
+					c.setpCW(mPoints.get(0));
+				}else{
+					c.setpCW(mPoints.get(i+1));
+				}
+			}
+		}
+	}
+
+	/**
+	 * Removes the specified category from the list
+	 * @param category
+	 */
+	private void removeCategory(String category){
+		int index = 0;
+		for(Category c : mCategories){
+			if(c.getCategory().equalsIgnoreCase(category)){
+				break;
+			}else{
+				index = index + 1;
+			}
+		}
+		mCategories.remove(index);
+		addPoints();
+		setPointsToCategories();
+	}
+
+	/**
+	 * Adds categories Helper
 	 * @param pCCW - Counter Clockwise point
 	 * @param pCW - Clockwise point
 	 * @param category - the Category of the slice
 	 * @param color - Color of the category
 	 */
-	private void addCategory(TouchPoint pCCW, TouchPoint pCW, String category,  Color color){
+	private void addCategoryHelper(TouchPoint pCCW, TouchPoint pCW, String category,  int color){
 		Category item = new Category(pCCW, pCW, category, color);
 
 		mCategories.add(item);
@@ -355,15 +432,15 @@ public class circle extends View {
 	 * @param category - One of: Protein, Grains, Vegetable, Oil/Fat/Sweets, Dairy, Fruits	
 	 * @param color - Color of the slice 
 	 */
-	
+
 	//foo
 	private class Category {
 		private TouchPoint pCCW;
 		private TouchPoint pCW;
 		private String category;
-		private Color color; // I think it should be hex / refer to color.xml
+		private int color;
 
-		public Category(TouchPoint ccw, TouchPoint cw, String category, Color c ){
+		public Category(TouchPoint ccw, TouchPoint cw, String category, int c ){
 			this.pCCW = ccw;
 			this.pCW = cw;
 			this.category = category;
@@ -378,18 +455,164 @@ public class circle extends View {
 			return this.pCW;
 		}
 
+		public void setpCCW(TouchPoint ccw){
+			this.pCCW = ccw;
+		}
+
+		public void setpCW(TouchPoint cw){
+			this.pCW = cw;
+		}
+
 		public String getCategory(){
 			return this.category;
 		}
 
-		public Color getColor(){
+		public int getColor(){
 			return this.color;
 		}
 
-		public void setColor(Color color){
+		public void setColor(int color){
 			this.color = color;
 		}
 	}
+	/**
+	 * Checks whether the category already exists in the list
+	 * @param category - name of category (ignores UPPER/LOWER case)
+	 * @return inList - exist in list 
+	 */
+	public boolean isCategoryinList(String category){
+		boolean inList = false;
+
+		for(Category c : mCategories){
+			if (c.getCategory().equalsIgnoreCase(category)){
+				inList = true;
+			}
+		}
+
+		return inList;
+	}
+
+	public void onProteinClicked(View v){
+		String category = "Protein";
+		TextView box = (TextView) v.findViewById(R.id.protein_box);
+		TextView text = (TextView) v.findViewById(R.id.protein_label);
+		
+		boolean inList = isCategoryinList(category);
+
+		if(inList){
+			// Deselect
+			box.setBackgroundColor(getResources().getColor(R.color.Protein_Grayed));
+			text.setTextColor(getResources().getColor(R.color.Protein_Grayed));
+			removeCategory(category);
+		}else{
+			// Select
+			box.setBackgroundColor(getResources().getColor(R.color.Protein));
+			text.setTextColor(getResources().getColor(R.color.Protein));
+			addCategory(category, getResources().getColor(R.color.Protein));
+		}		
+		Log.d(TAG, "Categories :" + mCategories.get(0).getpCCW().toString());
+	}
+
+	public void onVegetableClicked(View v){
+		String category = "Vegetable";
+		TextView box = (TextView) v.findViewById(R.id.vegetable_box);
+		TextView text = (TextView) v.findViewById(R.id.vegetable_label);
+
+		boolean inList = isCategoryinList(category);
+
+		if(inList){
+			// Deselect
+			box.setBackgroundColor(getResources().getColor(R.color.Vegetable_Grayed));
+			text.setTextColor(getResources().getColor(R.color.Vegetable_Grayed));
+			removeCategory(category);
+		}else{
+			// Select
+			box.setBackgroundColor(getResources().getColor(R.color.Vegetable));
+			text.setTextColor(getResources().getColor(R.color.Vegetable));
+			addCategory(category, getResources().getColor(R.color.Vegetable));
+		}	
+	}
+
+	public void onDairyClicked(View v){
+		String category = "Dairy";
+		TextView box = (TextView) v.findViewById(R.id.dairy_box);
+		TextView text = (TextView) v.findViewById(R.id.dairy_label);
+
+		boolean inList = isCategoryinList(category);
+
+		if(inList){
+			// Deselect
+			box.setBackgroundColor(getResources().getColor(R.color.Dairy_Grayed));
+			text.setTextColor(getResources().getColor(R.color.Dairy_Grayed));
+			removeCategory(category);
+		}else{
+			// Select
+			box.setBackgroundColor(getResources().getColor(R.color.Dairy));
+			text.setTextColor(getResources().getColor(R.color.Dairy));
+			addCategory(category, getResources().getColor(R.color.Dairy));
+		}	
+	}
+
+	public void onFruitClicked(View v){
+		String category = "Fruit";
+		TextView box = (TextView) v.findViewById(R.id.fruit_box);
+		TextView text = (TextView) v.findViewById(R.id.fruit_label);
+
+		boolean inList = isCategoryinList(category);
+
+		if(inList){
+			// Deselect
+			box.setBackgroundColor(getResources().getColor(R.color.Fruit_Grayed));
+			text.setTextColor(getResources().getColor(R.color.Fruit_Grayed));
+			removeCategory(category);
+		}else{
+			// Select
+			box.setBackgroundColor(getResources().getColor(R.color.Fruit));
+			text.setTextColor(getResources().getColor(R.color.Fruit));
+			addCategory(category, getResources().getColor(R.color.Fruit));
+		}	
+	}
+
+	public void onGrainClicked(View v){
+		String category = "Grain";
+		TextView box = (TextView) v.findViewById(R.id.grain_box);
+		TextView text = (TextView) v.findViewById(R.id.grain_label);
+
+		boolean inList = isCategoryinList(category);
+
+		if(inList){
+			// Deselect
+			box.setBackgroundColor(getResources().getColor(R.color.Grain_Grayed));
+			text.setTextColor(getResources().getColor(R.color.Grain_Grayed));
+			removeCategory(category);
+		}else{
+			// Select
+			box.setBackgroundColor(getResources().getColor(R.color.Grain));
+			text.setTextColor(getResources().getColor(R.color.Grain));
+			addCategory(category, getResources().getColor(R.color.Grain));
+		}	
+	}
+
+	public void onOilSugarClicked(View v){
+		String category = "OilSugar";
+		TextView box = (TextView) v.findViewById(R.id.oil_box);
+		TextView text = (TextView) v.findViewById(R.id.oil_label);
+
+		boolean inList = isCategoryinList(category);
+
+		if(inList){
+			// Deselect
+			box.setBackgroundColor(getResources().getColor(R.color.Oil_Sugar_Grayed));
+			text.setTextColor(getResources().getColor(R.color.Oil_Sugar_Grayed));
+			removeCategory(category);
+		}else{
+			// Select
+			box.setBackgroundColor(getResources().getColor(R.color.Oil_Sugar));
+			text.setTextColor(getResources().getColor(R.color.Oil_Sugar));
+			addCategory(category, getResources().getColor(R.color.Oil_Sugar));
+		}	
+	}
+
 
 	/**
 	 * returns true if the given x and y coords are "inside" of point p - in 
