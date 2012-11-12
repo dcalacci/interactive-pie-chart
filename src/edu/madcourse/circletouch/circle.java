@@ -651,6 +651,8 @@ public class circle extends View {
             // This code uses the ordering of mPoints to 
             // enforce the buffer space between points.
             for ( TouchPoint pt : mPoints) {
+              // normal movement, using the ordering of the elements, from
+              // the current touchPoint
               //cw
               if (!pt.isBeingTouched && hasPassed(
                     lastRad, 
@@ -665,6 +667,11 @@ public class circle extends View {
                 int ccwIndex = mPoints.size() - mPoints.indexOf(pt);
                 pt.mRads = moveRadCCW( curRad, ccwIndex*ANGLE_THRESHOLD);
                     }
+              if ( !pt.isBeingTouched && hasPointBehind(pt) ) {
+                double prevPointRads = mPoints.get(mPoints.indexOf(pt)-1).mRads;
+                pt.mRads = moveRadCW(prevPointRads, ANGLE_THRESHOLD);
+              }
+
               // cw and then ccw 'jumping'
               if (!pt.isBeingTouched && hasPassed(lastRad, pt.mRads, curRad)) {
                 Log.d(TAG, ">>>>>>Skipped a point...CW");
