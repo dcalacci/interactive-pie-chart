@@ -623,51 +623,64 @@ public class circle extends View {
             Log.d(TAG, "diff: " + radDifference);
             Log.d(TAG, "curr: " + curRad);
 
-            // handling keeping the buffer distance
+            // handling keeping the buffer distance with jumps
             for ( TouchPoint pt : mPoints) {
+              // cw and then ccw 'jumping'
                 if (!pt.isBeingTouched && hasPassed(lastRad, pt.mRads, curRad)) {
                   Log.d(TAG, ">>>>>>Skipped a point...CW");
                   pt.mRads = moveRadCW(curRad, ANGLE_THRESHOLD);
-                  return true;
                 } else if (!pt.isBeingTouched && hasPassed(curRad, pt.mRads, lastRad)) {
                   Log.d(TAG, ">>>>>>>Skippted a point...CCW");
                   pt.mRads = moveRadCCW(curRad, ANGLE_THRESHOLD);
-                  return true;
-                }
+                } 
             }
+
+            /*
+             *for ( TouchPoint pt : mPoints ) {
+             *  if ( !pt.isBeingTouched && hasPointBehind(pt)) {
+             *    TouchPoint pb = pointBehind(pt);
+             *    pt.mRads = moveRadCW(pb.mRads, ANGLE_THRESHOLD);
+             *  } else if (!pt.isBeingTouched && hasPointInFront(pt)) {
+             *    TouchPoint pf = pointInFront(pt);
+             *    pt.mRads = moveRadCCW(pf.mRads, ANGLE_THRESHOLD);
+             *  }
+             *}
+             */
 
             // handling points in front and behind in normal, slow motion.
             // if clockwise and points in front, move everything.
-            if (clockwise && hasPointInFront(p)) {
-              for (TouchPoint pt : mPoints) {
-                /*if (!pt.isBeingTouched && hasPassed(lastRad, pt.mRads, curRad)) {
-                  Log.d(TAG, ">>>>>>Skipped a point...");
-                  pt.mRads = moveRadCW(curRad, ANGLE_THRESHOLD);
-                  return true;
-                }
-                if (!pt.isBeingTouched && isBetween(lastRad, pt.mRads, curRad)) {
-                  Log.d(TAG, ">>>>>Skipped a point...");
-                  //pt.mRads = moveRadCW(curRad, ANGLE_THRESHOLD);
-                  onScrollFinished();
-                  return true;
-                }*/
-
-                // if there's a point behind pt and it's not being touched
-                if (!pt.isBeingTouched && hasPointBehind(pt)) {
-                  TouchPoint pb = pointBehind(pt);
-                  pt.mRads = moveRadCW(pb.mRads, ANGLE_THRESHOLD);
-                  //pt.mRads = moveRadCW(curRad, ANGLE_THRESHOLD);
-                }
-              }
-            } else if (!clockwise && hasPointBehind(p)) {
-              for (TouchPoint pt : mPoints) {
-                if(!pt.isBeingTouched && hasPointInFront(pt)) {
-                  TouchPoint pf = pointInFront(pt);
-                  pt.mRads = moveRadCCW(pf.mRads, ANGLE_THRESHOLD);
-                  /*pt.mRads = moveRadCCW(p.mRads, ANGLE_THRESHOLD);*/
-                }
-              }
-            }
+/*
+ *            if (clockwise && hasPointInFront(p)) {
+ *              for (TouchPoint pt : mPoints) {
+ *                if (!pt.isBeingTouched && hasPassed(lastRad, pt.mRads, curRad)) {
+ *                  Log.d(TAG, ">>>>>>Skipped a point...");
+ *                  pt.mRads = moveRadCW(curRad, ANGLE_THRESHOLD);
+ *                  return true;
+ *                }
+ *                if (!pt.isBeingTouched && isBetween(lastRad, pt.mRads, curRad)) {
+ *                  Log.d(TAG, ">>>>>Skipped a point...");
+ *                  pt.mRads = moveRadCW(curRad, ANGLE_THRESHOLD);
+ *                  onScrollFinished();
+ *                  return true;
+ *                }
+ *
+ *                 [>if there's a point behind pt and it's not being touched<]
+ *                if (!pt.isBeingTouched && hasPointBehind(pt)) {
+ *                  TouchPoint pb = pointBehind(pt);
+ *                  pt.mRads = moveRadCW(pb.mRads, ANGLE_THRESHOLD);
+ *                  pt.mRads = moveRadCW(curRad, ANGLE_THRESHOLD);
+ *                }
+ *              }
+ *            } else if (!clockwise && hasPointBehind(p)) {
+ *              for (TouchPoint pt : mPoints) {
+ *                if(!pt.isBeingTouched && hasPointInFront(pt)) {
+ *                  TouchPoint pf = pointInFront(pt);
+ *                  pt.mRads = moveRadCCW(pf.mRads, ANGLE_THRESHOLD);
+ *                  [>pt.mRads = moveRadCCW(p.mRads, ANGLE_THRESHOLD);<]
+ *                }
+ *              }
+ *            }
+ */
 
 
             inScroll = true;
