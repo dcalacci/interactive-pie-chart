@@ -196,13 +196,8 @@ public class circle extends View {
    * @param Color
    */
   private void addCategory(String category, int color){
-    if (mCategories.isEmpty()) {
-      addCategoryHelper(0, 0, category, color);
-      addPoints();
-    } else {
       addCategoryHelper(null, null, category, color);
       addPoints();		
-    }
   }
 
   /**
