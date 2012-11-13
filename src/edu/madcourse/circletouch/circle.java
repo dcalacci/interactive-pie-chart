@@ -232,16 +232,23 @@ public class circle extends View {
    */
   private void setPointsToCategories(){
     int size = mPoints.size();
+    int i = 0;
+    int j = i+1;
     for (Category c : mCategories){
-      for(int i = 0; i < size; i++){
-        c.setpCCW(mPoints.get(i));
-        if (i == (size - 1)){
-          c.setpCW(mPoints.get(0));
-        }else{
-          c.setpCW(mPoints.get(i+1));
-        }
-      }
-    }
+    	Log.d(TAG, "Index I:"+i);
+    	Log.d(TAG, "Index J:"+j);
+    	c.setpCCW(mPoints.get(i));
+    	if (i == (size - 1)){
+    		c.setpCW(mPoints.get(0));
+    	}else{
+    		c.setpCW(mPoints.get(j));
+    	}
+    	Log.d(TAG, "mPoints Size: "+ mPoints.size());
+    	Log.d(TAG, "pCCW: "+ c.getpCCW());
+    	Log.d(TAG, "pCW: "+ c.getpCW());
+    	i++;
+    	j++;
+    }      
   }
 
   /**
@@ -327,6 +334,10 @@ public class circle extends View {
 
     public void setColor(int color){
       this.color = color;
+    }
+    
+    public String toString(){
+    	return this.category;
     }
   }
   /**
@@ -480,27 +491,35 @@ public class circle extends View {
   protected void onDraw(Canvas canvas) {
     super.onDraw(canvas);
 
-    for (Category c : mCategories){
-    	int size = mCategories.size();
-    	if(size >= 2){
-    		TouchPoint start = c.getpCCW();
-    		TouchPoint end = c.getpCW();
-				
-    		PointF touchPointCoordsStart = radsToPointF(start.mRads);
-    		PointF touchPointCoordsEnd = radsToPointF(end.mRads);
-				
-    		Paint color = new Paint();
-    		color.setColor(c.getColor());
-			color.setStyle(Paint.Style.FILL_AND_STROKE);
-		
-			double angle =  radsMovedBetweenPoints(touchPointCoordsStart.x, touchPointCoordsStart.y, touchPointCoordsEnd.x, touchPointCoordsEnd.y);
-			Log.d(TAG, "Start x: "+ touchPointCoordsStart.x);
-			Log.d(TAG, "End x: "+ touchPointCoordsEnd.x);
-			double startAngle = coordsToRads(touchPointCoordsStart.x, touchPointCoordsStart.y);
-				
-			canvas.drawArc(mCircleBounds, 360 - radsToDegree(startAngle), radsToDegree(angle), true, color);
-    	}
-    }	
+    int size = mCategories.size();
+    if (size >= 2){
+    	for (int i = 0; i < size; i++){
+    		Category c = mCategories.get(i);
+	    //for (Category c : mCategories){
+	    	Log.d(TAG, "mCategories[" + i + "]:" + mCategories.toString());
+	    	
+	    	
+	    	Log.d(TAG, "Category :" + c.toString()); 
+	    	TouchPoint start = c.getpCCW();
+	    	TouchPoint end = c.getpCW();
+					
+	    	PointF touchPointCoordsStart = radsToPointF(start.mRads);
+	    	PointF touchPointCoordsEnd = radsToPointF(end.mRads);
+					
+	    	Paint color = new Paint();
+	    	color.setColor(c.getColor());
+	    	color.setStyle(Paint.Style.FILL_AND_STROKE);
+			
+	    	double angle =  radsMovedBetweenPoints(touchPointCoordsStart.x, touchPointCoordsStart.y, touchPointCoordsEnd.x, touchPointCoordsEnd.y);
+	    	Log.d(TAG, "Start x: "+ touchPointCoordsStart.x);
+	    	Log.d(TAG, "End x: "+ touchPointCoordsEnd.x);
+	    	double startAngle = coordsToRads(touchPointCoordsStart.x, touchPointCoordsStart.y);
+					
+	    	Log.d(TAG, "Color :" + color); 
+	    	canvas.drawArc(mCircleBounds, 360 - radsToDegree(startAngle), radsToDegree(angle), true, color);
+	    	
+	    }	
+    }
     
     for (TouchPoint point : mPoints) {
       PointF touchPointCoords = radsToPointF(point.mRads);
