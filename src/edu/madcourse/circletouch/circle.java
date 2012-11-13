@@ -174,6 +174,7 @@ public class circle extends View {
 		super.onDraw(canvas);
 		this.canvas = canvas;
 		Log.d(TAG, "mPoints :" + mPoints.toString());
+
 		for (TouchPoint point : mPoints) {
 			PointF touchPointCoords = radsToPointF(point.mRads);
 
@@ -205,7 +206,17 @@ public class circle extends View {
 					mSeparatorLinesPaint
 					);
 		}
-		
+
+//		for (Category c : mCategories){
+//			TouchPoint start = c.getpCCW();
+//			TouchPoint end = c.getpCW();
+//			
+//			PointF touchPointCoordsStart = radsToPointF(start.mRads);
+//			PointF touchPointCoordsEnd = radsToPointF(end.mRads);
+//			
+//			double angle = radsMovedBetweenPoints(touchPointCoordsStart.x, touchPointCoordsStart.y, touchPointCoordsEnd.x, touchPointCoordsEnd.y);
+//			canvas.drawArc(mCircleBounds, startAngle, sweepAngle, useCenter, c.getColor());
+//		}
 	}
 
 	/**
