@@ -72,7 +72,14 @@ public class circle extends View {
   private Paint mTouchPointPaint;
   private Paint mSeparatorLinesPaint;
   private Context mContext;
-
+  // for categories
+  private Paint mCategoryPaint;
+  /*private Paint mProteinPaint;
+  private Paint mVegetablePaint;
+  private Paint mDairyPaint;
+  private Paint mOilSugarPaint;
+  private Paint mFruitPaint;
+  private Paint mGrainPaint;*/
   /**
    * boring constructor with just a context
    */
@@ -189,8 +196,13 @@ public class circle extends View {
    * @param Color
    */
   private void addCategory(String category, int color){
-    addCategoryHelper(null, null, category, color);
-    addPoints();		
+    if (mCategories.isEmpty()) {
+      addCategoryHelper(0, 0, category, color);
+      addPoints();
+    } else {
+      addCategoryHelper(null, null, category, color);
+      addPoints();		
+    }
   }
 
   /**
@@ -504,6 +516,19 @@ public class circle extends View {
           mSeparatorLinesPaint
           );
     }
+
+    // drawing the slices
+    /*for (Category c : mCategories) {
+      mCategoryPaint.setColor(c.getColor());
+      canvas.drawArc(
+          mCircleBounds,
+          (float)Math.toDegrees(c.pCCW.mRads),
+          (float)Math.toDegrees(c.pCW.mRads),
+          true,
+          mCategoryPaint);
+    }*/
+
+
   }
 
   /**
@@ -576,6 +601,9 @@ public class circle extends View {
     // set up the circle paint
     mCirclePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     mCirclePaint.setStyle(Paint.Style.STROKE);
+
+    mCategoryPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+    mCategoryPaint.setStyle(Paint.Style.FILL);
 
     // set up the touchpoint paint
     mTouchPointPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
