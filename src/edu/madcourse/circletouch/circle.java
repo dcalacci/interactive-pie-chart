@@ -586,12 +586,6 @@ public class circle extends View {
     mSeparatorLinesPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     mSeparatorLinesPaint.setStyle(Paint.Style.STROKE);
 
-    // add some touch points
-    addItem(Math.PI);
-    addItem(Math.PI/2);
-    addItem(Math.PI/3);
-    addItem(-1*Math.PI/2);
-
     printTouchPoints();
     sortListCW(mPoints, 0);
     printTouchPoints();
@@ -861,28 +855,6 @@ public class circle extends View {
     inScroll = false;
   }
 
-  //TODO
-  //notes
-  // maybe we could also enforce two invariants:
-  // 1.  mPoints is always ordered from least to greatest rotation, going 
-  //  clockwise, starting from due east(0c)
-  // 2.  There is always, at minimum, an ANGLE_THRESHOLD rotation distance
-  //  between any two given points
-  // --how to enforce?
-  //  when adding a new element, enforce the first invariant/second invariant by
-  //    default
-  //  when scrolling, USE the invariant in a useful way 
-  //  when scrolling, enforce the invariant BY USING using the invariants:
-  //    because points are sorted by rotation:
-  //    if we're scrolling and moving clockwise and have a point inFront of us, 
-  //    that point has the current touch point behind it.  if that point is
-  //    ANGLE_THRESHOLD behind another point, the second point shold be 
-  //    i*ANGLE_THRESHOLD away from the current touched point, where i is the 
-  //    index of the point in question(the farther one).
-  //    PROBLEMS: edge case(s) of -pi to +pi.
-  //  other ideas: when we're scrolling, invariant is that the points are ordered
-  //  by cw distance from the point being touched?
-
   /**
    * let's track some gestures
    */
@@ -940,7 +912,6 @@ public class circle extends View {
                       lastRad, 
                       pt.mRads, 
                       moveRadCW(curRad, ANGLE_THRESHOLD))) {
-                  Log.d(TAG, "Moving Clockwise!");
                   pt.mRads = moveRadCW( curRad, mPoints.indexOf(pt)*ANGLE_THRESHOLD);
                   //ccw
                       }
@@ -954,7 +925,6 @@ public class circle extends View {
                 CCWList.addAll(mPoints.subList(1, mPoints.size()));
                 Collections.reverse(CCWList);
                 CCWList.add(0, mPoints.get(0));
-                Log.d(TAG, "Moving Counter-Clockwise!");
 
                 // normal movement using ordering of the elements
                 if (!pt.isBeingTouched && hasPassed(
@@ -981,55 +951,6 @@ public class circle extends View {
                 pt.mRads = moveRadCCW(curRad, ANGLE_THRESHOLD);
               }
             }
-
-
-            /*
-             *for ( TouchPoint pt : mPoints ) {
-             *  if ( !pt.isBeingTouched && hasPointBehind(pt)) {
-             *    TouchPoint pb = pointBehind(pt);
-             *    pt.mRads = moveRadCW(pb.mRads, ANGLE_THRESHOLD);
-             *  } else if (!pt.isBeingTouched && hasPointInFront(pt)) {
-             *    TouchPoint pf = pointInFront(pt);
-             *    pt.mRads = moveRadCCW(pf.mRads, ANGLE_THRESHOLD);
-             *  }
-             *}
-             */
-
-            // handling points in front and behind in normal, slow motion.
-            // if clockwise and points in front, move everything.
-            /*
-             *            if (clockwise && hasPointInFront(p)) {
-             *              for (TouchPoint pt : mPoints) {
-             *                if (!pt.isBeingTouched && hasPassed(lastRad, pt.mRads, curRad)) {
-             *                  Log.d(TAG, ">>>>>>Skipped a point...");
-             *                  pt.mRads = moveRadCW(curRad, ANGLE_THRESHOLD);
-             *                  return true;
-             *                }
-             *                if (!pt.isBeingTouched && isBetween(lastRad, pt.mRads, curRad)) {
-             *                  Log.d(TAG, ">>>>>Skipped a point...");
-             *                  pt.mRads = moveRadCW(curRad, ANGLE_THRESHOLD);
-             *                  onScrollFinished();
-             *                  return true;
-             *                }
-             *
-             *                 [>if there's a point behind pt and it's not being touched<]
-             *                if (!pt.isBeingTouched && hasPointBehind(pt)) {
-             *                  TouchPoint pb = pointBehind(pt);
-             *                  pt.mRads = moveRadCW(pb.mRads, ANGLE_THRESHOLD);
-             *                  pt.mRads = moveRadCW(curRad, ANGLE_THRESHOLD);
-             *                }
-             *              }
-             *            } else if (!clockwise && hasPointBehind(p)) {
-             *              for (TouchPoint pt : mPoints) {
-             *                if(!pt.isBeingTouched && hasPointInFront(pt)) {
-             *                  TouchPoint pf = pointInFront(pt);
-             *                  pt.mRads = moveRadCCW(pf.mRads, ANGLE_THRESHOLD);
-             *                  [>pt.mRads = moveRadCCW(p.mRads, ANGLE_THRESHOLD);<]
-             *                }
-             *              }
-             *            }
-             */
-
 
             inScroll = true;
             invalidate();
