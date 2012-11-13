@@ -480,6 +480,28 @@ public class circle extends View {
   protected void onDraw(Canvas canvas) {
     super.onDraw(canvas);
 
+    for (Category c : mCategories){
+    	int size = mCategories.size();
+    	if(size >= 2){
+    		TouchPoint start = c.getpCCW();
+    		TouchPoint end = c.getpCW();
+				
+    		PointF touchPointCoordsStart = radsToPointF(start.mRads);
+    		PointF touchPointCoordsEnd = radsToPointF(end.mRads);
+				
+    		Paint color = new Paint();
+    		color.setColor(c.getColor());
+			color.setStyle(Paint.Style.FILL_AND_STROKE);
+		
+			double angle =  radsMovedBetweenPoints(touchPointCoordsStart.x, touchPointCoordsStart.y, touchPointCoordsEnd.x, touchPointCoordsEnd.y);
+			Log.d(TAG, "Start x: "+ touchPointCoordsStart.x);
+			Log.d(TAG, "End x: "+ touchPointCoordsEnd.x);
+			double startAngle = coordsToRads(touchPointCoordsStart.x, touchPointCoordsStart.y);
+				
+			canvas.drawArc(mCircleBounds, 360 - radsToDegree(startAngle), radsToDegree(angle), true, color);
+    	}
+    }	
+    
     for (TouchPoint point : mPoints) {
       PointF touchPointCoords = radsToPointF(point.mRads);
 
@@ -511,7 +533,7 @@ public class circle extends View {
           mSeparatorLinesPaint
           );
     }
-
+  
     // drawing the slices
     /*for (Category c : mCategories) {
       mCategoryPaint.setColor(c.getColor());
@@ -546,6 +568,11 @@ public class circle extends View {
     }
     return false;
 
+  }
+  
+  private float radsToDegree(double val){
+	  float toDegree = (float) Math.toDegrees(val);
+	  return toDegree;
   }
 
   /**
