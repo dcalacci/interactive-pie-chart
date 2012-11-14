@@ -186,6 +186,7 @@ public class circle extends View {
 
     // add it to the list of points
     mPoints.add(p);
+    sortListCW(mPoints, 0);
     invalidate();
   }
 
@@ -200,12 +201,26 @@ public class circle extends View {
       addPoints();		
   }
 
+  private void addNItems(int n) {
+    double radSections = (Math.PI*2)/n;
+    double totalRads = 0;
+    for (int i = 0; i < n; i++) {
+      totalRads = moveRadCW(totalRads, radSections);
+      addItem(totalRads);
+    }
+  }
+
+
   /**
    * Adds points to the charts
    */
   private void addPoints(){
     int cSize = mCategories.size();		
-
+    clearPoints();
+    addNItems(cSize);
+    setPointsToCategories();
+	/*
+    // needs to take into acount -pi and +pi etc.
     double rads = (Math.PI * 2) / (cSize);
     double rads_sum = 0;
 
@@ -214,10 +229,10 @@ public class circle extends View {
     if(cSize != 1){
       for (int i = 0; i < cSize; i++){
         rads_sum += rads;
-        addItem(rads_sum);	
+        addItem(rads_sum);
       }
       setPointsToCategories();
-    }
+    }*/
   }
 
   /**
@@ -230,6 +245,7 @@ public class circle extends View {
   /**
    * Sets the points associated to the category
    */
+  // this doesn't add the correct points.  REview.
   private void setPointsToCategories(){
     int size = mPoints.size();
     int i = 0;
@@ -237,15 +253,18 @@ public class circle extends View {
     for (Category c : mCategories){
     	Log.d(TAG, "Index I:"+i);
     	Log.d(TAG, "Index J:"+j);
+
     	c.setpCCW(mPoints.get(i));
     	if (i == (size - 1)){
     		c.setpCW(mPoints.get(0));
     	}else{
     		c.setpCW(mPoints.get(j));
     	}
+
     	Log.d(TAG, "mPoints Size: "+ mPoints.size());
     	Log.d(TAG, "pCCW: "+ c.getpCCW());
     	Log.d(TAG, "pCW: "+ c.getpCW());
+
     	i++;
     	j++;
     }      
@@ -257,6 +276,7 @@ public class circle extends View {
    */
   private void removeCategory(String category){
     int index = 0;
+    // iterate through category list, skip down if we find category
     for(Category c : mCategories){
       if(c.getCategory().equalsIgnoreCase(category)){
         break;
@@ -265,6 +285,7 @@ public class circle extends View {
       }
     }
     mCategories.remove(index);
+    // if only one category, remove the only remaining one
     if(mCategories.size() < 2){
       clearPoints();
       Log.d(TAG, "ALL GONE: " + mPoints.toString());
@@ -496,31 +517,49 @@ public class circle extends View {
     	for (int i = 0; i < size; i++){
     		Category c = mCategories.get(i);
 	    //for (Category c : mCategories){
-	    	Log.d(TAG, "mCategories[" + i + "]:" + mCategories.toString());
+				//Log.d(TAG, "mCategories[" + i + "]:" + mCategories.toString());
 	    	
 	    	
-	    	Log.d(TAG, "Category :" + c.toString()); 
-	    	TouchPoint start = c.getpCCW();
+				//Log.d(TAG, "Category :" + c.toString()); 
 	    	TouchPoint end = c.getpCW();
-					
+	    	TouchPoint start = c.getpCCW();
+				
 	    	PointF touchPointCoordsStart = radsToPointF(start.mRads);
 	    	PointF touchPointCoordsEnd = radsToPointF(end.mRads);
 					
-	    	Paint color = new Paint();
+	    	Paint color = new Paint(Paint.ANTI_ALIAS_FLAG);
 	    	color.setColor(c.getColor());
 	    	color.setStyle(Paint.Style.FILL_AND_STROKE);
-			
-	    	double angle =  radsMovedBetweenPoints(touchPointCoordsStart.x, touchPointCoordsStart.y, touchPointCoordsEnd.x, touchPointCoordsEnd.y);
-	    	Log.d(TAG, "Start x: "+ touchPointCoordsStart.x);
-	    	Log.d(TAG, "End x: "+ touchPointCoordsEnd.x);
-	    	double startAngle = coordsToRads(touchPointCoordsStart.x, touchPointCoordsStart.y);
-					
-	    	Log.d(TAG, "Color :" + color); 
-	    	canvas.drawArc(mCircleBounds, 360 - radsToDegree(startAngle), radsToDegree(angle), true, color);
-	    	
-	    }	
+
+        float startAngle = (float) radsToDegree(start.mRads);
+        float endAngle = (float) radsToDegree(end.mRads);
+        float sweepAngle;
+        // get correct rad magnitude
+        if (getDifference(start.mRads, end.mRads) < 0) {
+          sweepAngle = (float) (Math.PI*2 + getDifference(start.mRads, end.mRads));
+        } else {
+          sweepAngle = (float) (getDifference(start.mRads, end.mRads));
+        }
+        // convert to degrees
+        sweepAngle = radsToDegree(sweepAngle);
+
+        //float sweepAngle = (float) radsToDegree(Math.abs(getDifference(start.mRads, end.mRads)));
+        Log.d(TAG, ">>>>SWEEP: " + sweepAngle);
+        Log.d(TAG, "Color :" + color); 
+        //canvas.drawArc(mCircleBounds, 360 - radsToDegree(startAngle), radsToDegree(angle), true, color);
+        canvas.drawArc(mCircleBounds, startAngle, sweepAngle, true, color);
+
+      }	
+    } else if (size == 1) { // only one category
+      Category c = mCategories.get(0);
+      Paint color = new Paint(Paint.ANTI_ALIAS_FLAG);
+      color.setColor(c.getColor());
+      color.setStyle(Paint.Style.FILL_AND_STROKE);
+      canvas.drawArc(mCircleBounds, 0f, 360f, true, color);
     }
-    
+
+
+
     for (TouchPoint point : mPoints) {
       PointF touchPointCoords = radsToPointF(point.mRads);
 
@@ -552,17 +591,17 @@ public class circle extends View {
           mSeparatorLinesPaint
           );
     }
-  
+
     // drawing the slices
     /*for (Category c : mCategories) {
       mCategoryPaint.setColor(c.getColor());
       canvas.drawArc(
-          mCircleBounds,
-          (float)Math.toDegrees(c.pCCW.mRads),
-          (float)Math.toDegrees(c.pCW.mRads),
-          true,
-          mCategoryPaint);
-    }*/
+      mCircleBounds,
+      (float)Math.toDegrees(c.pCCW.mRads),
+      (float)Math.toDegrees(c.pCW.mRads),
+      true,
+      mCategoryPaint);
+      }*/
 
 
   }
@@ -571,34 +610,37 @@ public class circle extends View {
    * doing stuff with touch
    */
   @Override
-  public boolean onTouchEvent(MotionEvent event) {
-    //Log.d(TAG, "ONTOUCHEVENT | received a touchEvent");
-    boolean result = mGestureDetector.onTouchEvent(event);
+    public boolean onTouchEvent(MotionEvent event) {
+      //Log.d(TAG, "ONTOUCHEVENT | received a touchEvent");
+      boolean result = mGestureDetector.onTouchEvent(event);
 
-    // if the user lifts their finger, we're not in a scroll.
-    if (event.getAction() == MotionEvent.ACTION_UP) {
-      inScroll = false;
-      onScrollFinished();
+      // if the user lifts their finger, we're not in a scroll.
+      if (event.getAction() == MotionEvent.ACTION_UP) {
+        inScroll = false;
+        onScrollFinished();
+      }
+
+      // return true if mGestureDetector handled the event
+      if (result) {
+        return result;
+      }
+      return false;
+
     }
 
-    // return true if mGestureDetector handled the event
-    if (result) {
-      return result;
-    }
-    return false;
-
-  }
-  
   private float radsToDegree(double val){
-	  float toDegree = (float) Math.toDegrees(val);
-	  return toDegree;
+    float toDegree = (float) Math.toDegrees(val);
+    Log.d(TAG, 
+        val +
+        " radians is " +
+        toDegree +
+        "degrees");
+    return toDegree;
   }
 
   /**
-   * converts a degree value to a coordinate on the edge of the circle
-   * @param theta The degree value to convert to a coordinate
-   * need to add pi/2 to the values because these calculations work for a 
-   * circle where 0 degrees is due north, not east.
+   * converts a radian value to a coordinate on the edge of the circle
+   * @param theta The radian value to convert to a coordinate
    */
   private PointF radsToPointF(double theta) {
     float y = (float)
@@ -619,20 +661,20 @@ public class circle extends View {
     return rads;
   }
 
-  /**
+  /*[>*
    * determines the number of degrees between two points using the circle's
    * center point.
    * @param x1 The x-coordinate of the first point
    * @param y1 The y-coordinate of the first point
    * @param x2 The x-coordinate of the second point
    * @param y2 The y-coordinate of the second point
-   */
-  public double radsMovedBetweenPoints(
-      float x1, float y1, float x2, float y2) {
-    double angle1 = coordsToRads(x1, y1);
-    double angle2 = coordsToRads(x2, y2);
-    return (double) (angle2-angle1);
-  }
+   <]
+   public double radsMovedBetweenPoints(
+   float x1, float y1, float x2, float y2) {
+   double angle1 = coordsToRads(x1, y1);
+   double angle2 = coordsToRads(x2, y2);
+   return (double) (angle2-angle1);
+   }*/
 
   /**
    * Initializes some values and all of the fancy paints and listeners
@@ -961,9 +1003,9 @@ public class circle extends View {
             // if the point "isbeingtouched"...
           } if (p.isBeingTouched) {
             p.mRads = coordsToRads(e2.getX(), e2.getY());
-            Log.d(TAG, "last: " + lastRad);
-            Log.d(TAG, "diff: " + radDifference);
-            Log.d(TAG, "curr: " + curRad);
+            /*Log.d(TAG, "last: " + lastRad);
+              Log.d(TAG, "diff: " + radDifference);
+              Log.d(TAG, "curr: " + curRad);*/
 
             // keep 'em in line, cw
             sortListCW(mPoints, p.mRads);
@@ -1007,7 +1049,7 @@ public class circle extends View {
                 if ( !pt.isBeingTouched && hasPointInFront(pt)) {
                   double nextPointRads = CCWList.get(CCWList.indexOf(pt)-1).mRads;
                   pt.mRads = moveRadCCW(nextPointRads, ANGLE_THRESHOLD);
-                    }
+                }
               }
 
 
