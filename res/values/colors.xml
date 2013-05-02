@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<resources>
+
+    <color name="Chart_Background">#fdf6e3</color>
+    <color name="Category_Background">#fdf6e3</color>
+    <color name="AddChart_Table_Background">#eee8d5</color>
+    <color name="Chart_Circle_empty">#839496</color>
+
+    <!-- Tabs -->
+    <color name="Tab_Selected">#8b8878</color>
+    <color name="Tab_Unselected">#cdc8b1</color>
+    <!-- Base Colors -->
+    <color name="Protein">#dc322f</color>
+    <color name="Vegetable">#859900</color>
+    <color name="Dairy">#268bd2</color>
+    <color name="Oil_Sugar">#F25518</color>
+    <color name="Fruit">#d33682</color>
+    <color name="Grain">#cb4b16</color>
+
+    <!-- Highlight Colors -->
+    <!-- <color name="Protein_Highlight">#ff0000</color> -->
+    <!-- <color name="Vegetable_Highlight">#7fff00</color> -->
+    <!-- <color name="Dairy_Highlight">#00bfff</color> -->
+    <!-- <color name="Oil_Sugar_Highlight">#ffa500</color> -->
+    <!-- <color name="Fruit_Highlight">#ff69b4</color> -->
+    <!-- <color name="Grain_Highlight">#d2691e</color> -->
+
+    <!-- Grayed Colors -->
+    <color name="Protein_Grayed">#D88382</color>
+    <color name="Vegetable_Grayed">#C4CC7C</color>
+    <color name="Dairy_Grayed">#b0c4de</color>
+    <color name="Oil_Sugar_Grayed">#E5825B</color>
+    <color name="Fruit_Grayed">#dda0dd</color>
+    <color name="Grain_Grayed">#C98F78</color>
+
+
+
+</resources>
