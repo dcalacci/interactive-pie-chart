@@ -212,7 +212,7 @@ public class Chart_View extends View {
   private void addItem(double rads) {
     // create a new point
     TouchPoint p = new TouchPoint();
-    p.mRads = rads;
+    p.setmRads(rads);
 
     // add it to the list of points
     mPoints.add(p);
@@ -263,9 +263,9 @@ public class Chart_View extends View {
   public void linkPointsAndCategories() {
     for (TouchPoint pt : mPoints) {
       for (Category c : mCategories) {
-        if (pt.mRads == c.getpCW().mRads) {
+        if (pt.getmRads() == c.getpCW().getmRads()) {
           c.setpCW(pt);
-        } else if (pt.mRads == c.getpCCW().mRads) {
+        } else if (pt.getmRads() == c.getpCCW().getmRads()) {
           c.setpCCW(pt);
         }
       }
@@ -423,13 +423,13 @@ public class Chart_View extends View {
         color.setColor(c.getColor());
         color.setStyle(Paint.Style.FILL_AND_STROKE);
 
-        float startAngle = (float) radsToDegree(start.mRads);
+        float startAngle = (float) radsToDegree(start.getmRads());
         float sweepAngle;
         // get correct rad magnitude
-        if (getDifference(start.mRads, end.mRads) < 0) {
-          sweepAngle = (float) (Math.PI*2 + getDifference(start.mRads, end.mRads));
+        if (getDifference(start.getmRads(), end.getmRads()) < 0) {
+          sweepAngle = (float) (Math.PI*2 + getDifference(start.getmRads(), end.getmRads()));
         } else {
-          sweepAngle = (float) (getDifference(start.mRads, end.mRads));
+          sweepAngle = (float) (getDifference(start.getmRads(), end.getmRads()));
         }
         // convert to degrees, draw the arc.
         sweepAngle = radsToDegree(sweepAngle);
@@ -440,7 +440,7 @@ public class Chart_View extends View {
 
       // drawing the touch-points
       for (TouchPoint point : mPoints) {
-        PointF touchPointCoords = radsToPointF(point.mRads);
+        PointF touchPointCoords = radsToPointF(point.getmRads());
         //Draw the separators
         canvas.drawLine(
             mCircleX,
@@ -453,7 +453,7 @@ public class Chart_View extends View {
       if (mIsEditing) {
         Log.d(TAG, "@@onDraw, editing - drawing the touchPoints");
         for (TouchPoint point : mPoints) {
-          PointF touchPointCoords = radsToPointF(point.mRads);
+          PointF touchPointCoords = radsToPointF(point.getmRads());
           // draw the touchPoint on the canvas
           canvas.drawCircle(
               touchPointCoords.x,
@@ -589,7 +589,7 @@ public class Chart_View extends View {
 
   private void printTouchPoints() {
     for (int i = 0; i< mPoints.size(); i++) {
-      System.out.println(i + ": " + mPoints.get(i).mRads);
+      System.out.println(i + ": " + mPoints.get(i).getmRads());
     }
   }
 
@@ -635,7 +635,7 @@ public class Chart_View extends View {
    * @param p The TouchPoint to check
    */
   private boolean isTouchingThisPoint(float x, float y, TouchPoint p) {
-    PointF pCoords = radsToPointF((double)p.mRads);
+    PointF pCoords = radsToPointF((double)p.getmRads());
     double dist = Math.sqrt( 
         Math.pow( (double)pCoords.x - x, 2) +
         Math.pow( (double)pCoords.y - y, 2));
@@ -662,11 +662,11 @@ public class Chart_View extends View {
   private boolean hasPointInFront(TouchPoint p1) {
     for (TouchPoint point : mPoints) {
       // edge case
-      if (point.mRads < 0 && p1.mRads > 0 &&
-          ((Math.PI + point.mRads + Math.PI - p1.mRads) <= ANGLE_THRESHOLD)) {
+      if (point.getmRads() < 0 && p1.getmRads() > 0 &&
+          ((Math.PI + point.getmRads() + Math.PI - p1.getmRads()) <= ANGLE_THRESHOLD)) {
         return true;
-      } else if (point.mRads > p1.mRads &&
-          point.mRads - p1.mRads < ANGLE_THRESHOLD) {
+      } else if (point.getmRads() > p1.getmRads() &&
+          point.getmRads() - p1.getmRads() < ANGLE_THRESHOLD) {
         return true;
           }
     }
@@ -682,11 +682,11 @@ public class Chart_View extends View {
   private boolean hasPointBehind(TouchPoint p1) {
     for (TouchPoint point : mPoints) {
       // edge case
-      if (point.mRads > 0 && p1.mRads < 0 &&
-          (Math.PI - point.mRads + Math.PI + p1.mRads <= ANGLE_THRESHOLD)) {
+      if (point.getmRads() > 0 && p1.getmRads() < 0 &&
+          (Math.PI - point.getmRads() + Math.PI + p1.getmRads() <= ANGLE_THRESHOLD)) {
         return true;
-      } else if (point.mRads < p1.mRads &&
-          p1.mRads - point.mRads <= ANGLE_THRESHOLD) {
+      } else if (point.getmRads() < p1.getmRads() &&
+          p1.getmRads() - point.getmRads() <= ANGLE_THRESHOLD) {
         return true;
           }
     }
@@ -746,8 +746,8 @@ public class Chart_View extends View {
         new Comparator<TouchPoint>() {
           public int compare(TouchPoint a, TouchPoint b) {
             // difference is >0 if clockwise, <0 if not.
-            double aDiff = getDifference(refRad, a.mRads);
-            double bDiff = getDifference(refRad, b.mRads);
+            double aDiff = getDifference(refRad, a.getmRads());
+            double bDiff = getDifference(refRad, b.getmRads());
             if (aDiff < 0) {
               aDiff = Math.PI*2 + aDiff;
             }
@@ -774,8 +774,8 @@ public class Chart_View extends View {
         new Comparator<TouchPoint>() {
           public int compare(TouchPoint a, TouchPoint b) {
             // difference is >0 if clockwise, <0 if not.
-            double aDiff = getDifference(refRad, a.mRads);
-            double bDiff = getDifference(refRad, b.mRads);
+            double aDiff = getDifference(refRad, a.getmRads());
+            double bDiff = getDifference(refRad, b.getmRads());
             if (aDiff < 0) {
               aDiff = Math.PI*2 + aDiff;
             }
@@ -845,7 +845,7 @@ public class Chart_View extends View {
    */
   private void movePointBeingTouched(double rads, boolean cw) {
     // move point being touched to the given radian value
-    mPoints.get(0).mRads = rads;
+    mPoints.get(0).setmRads(rads);
     // move other points
     Log.d(TAG, "@@movePointBeingTouched | before for loop");
     printTouchPoints();
@@ -853,14 +853,14 @@ public class Chart_View extends View {
       if (!pt.isBeingTouched) {
         if (cw) {
           if (hasPointBehind(pt)) {
-            double prevPointRads = mPoints.get(mPoints.indexOf(pt)-1).mRads;
-            pt.mRads = moveRadCW(prevPointRads, ANGLE_THRESHOLD);
+            double prevPointRads = mPoints.get(mPoints.indexOf(pt)-1).getmRads();
+            pt.setmRads(moveRadCW(prevPointRads, ANGLE_THRESHOLD));
             Log.d(TAG, "@@movePointBeingTouched | CW moving "+mPoints.indexOf(pt) +" to " +moveRadCW(prevPointRads, ANGLE_THRESHOLD));
           }
         } else {
           if (hasPointInFront(pt)) {
-            double nextPointRads = mPoints.get(mPoints.indexOf(pt)-1).mRads;
-            pt.mRads = moveRadCCW(nextPointRads, ANGLE_THRESHOLD);
+            double nextPointRads = mPoints.get(mPoints.indexOf(pt)-1).getmRads();
+            pt.setmRads(moveRadCCW(nextPointRads, ANGLE_THRESHOLD));
             Log.d(TAG, "@@movePointBeingTouched | CCW moving "+mPoints.indexOf(pt) +" to " +moveRadCCW(nextPointRads, ANGLE_THRESHOLD));
           }
         }
@@ -882,10 +882,10 @@ public class Chart_View extends View {
     boolean skipped = false;
     for (TouchPoint pt : mPoints) {
       if (!pt.isBeingTouched) {
-        if (cw && !pt.isBeingTouched && hasPassed(lastRad, pt.mRads, curRad)) {
+        if (cw && !pt.isBeingTouched && hasPassed(lastRad, pt.getmRads(), curRad)) {
           skipped = true;
         }
-        else if (hasPassed(curRad, pt.mRads, lastRad)) {
+        else if (hasPassed(curRad, pt.getmRads(), lastRad)) {
           skipped = true;
         }
       }
@@ -913,9 +913,9 @@ public class Chart_View extends View {
       /* if (Math.abs(diff) > ANGLE_INTERVAL) { */
       Log.d(TAG, "@@_movePoints | diff > interval. Interpolating...");
       // interpolate the values
-      ArrayList<Double> interpolated = interpolate(mPoints.get(0).mRads, curRad, clockwise);
+      ArrayList<Double> interpolated = interpolate(mPoints.get(0).getmRads(), curRad, clockwise);
       for (Double rad : interpolated) {
-        Log.d(TAG, "@@_movePoints | moving pt being touched to : " +rad +" from " +mPoints.get(0).mRads);
+        Log.d(TAG, "@@_movePoints | moving pt being touched to : " +rad +" from " +mPoints.get(0).getmRads());
         movePointBeingTouched(rad, clockwise);
       }
       Log.d(TAG, "@@_movePoints | done interpolating");
@@ -969,7 +969,7 @@ public class Chart_View extends View {
           double touchRads = 0;;
           for (TouchPoint p : mPoints) {
             if (p.isBeingTouched) {
-              touchRads = p.mRads;
+              touchRads = p.getmRads();
             }
           }
           if (clockwise) {
