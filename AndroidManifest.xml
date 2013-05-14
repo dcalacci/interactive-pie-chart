@@ -9,7 +9,7 @@
 
     <application android:label="@string/app_name">
 
-        <activity android:name="org.dcalacci.android.ipc.PieChartActivity"
+        <activity android:name="org.dcalacci.android.testActivity.TestActivity"
                   android:label="@string/app_name">
 
             <intent-filter>

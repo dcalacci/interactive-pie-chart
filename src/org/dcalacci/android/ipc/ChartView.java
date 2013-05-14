@@ -1,19 +1,16 @@
 package org.dcalacci.android.ipc;
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
-import org.dcalacci.android.ipc.R;
+import org.json.JSONArray;
+import org.json.JSONObject;
 
-import android.app.Activity;
 import android.content.Context;
 import android.content.res.TypedArray;
 import android.graphics.Canvas;
-import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.PointF;
 import android.graphics.RectF;
@@ -23,16 +20,9 @@ import android.util.Log;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.View;
-import android.widget.TextView;
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
 
-
-
-public class Chart_View extends View {
+public class ChartView extends View {
   private String TAG = "circletouch.circle";
-  private Canvas canvas;
   // view boundary for the circle.
   private RectF mCircleBounds = new RectF();
   private ArrayList<TouchPoint> mPoints = new ArrayList<TouchPoint>();
@@ -41,7 +31,7 @@ public class Chart_View extends View {
   private String mOrigin = "";
   private boolean mIsEditing = true;
 
-  //Items 
+  //Items
   private ArrayList<Category> mCategories = new ArrayList<Category>();
 
   // circle positions
@@ -49,12 +39,11 @@ public class Chart_View extends View {
   private float mCircleY;
   private float mCircleRadius;
 
-  // angle stuff
+  // minimum value between two touchpoints, in radians.
   // 20 degrees in radians
   private final double ANGLE_THRESHOLD = 0.174532*2;
   // 10 degrees in radians
   private final double ANGLE_INTERVAL = 0.174532;
-
 
   // touchPoint info
   private int mTouchPointRadius;
@@ -64,8 +53,6 @@ public class Chart_View extends View {
   private GestureDetector mGestureDetector;
   private boolean inScroll = false;
 
-  
-
   //paints
   private Paint mCirclePaint;
   private Paint mTouchPointPaint;
@@ -73,27 +60,21 @@ public class Chart_View extends View {
   private Context mContext;
   // for categories
   private Paint mCategoryPaint;
-  /*private Paint mProteinPaint;
-    private Paint mVegetablePaint;
-    private Paint mDairyPaint;
-    private Paint mOilSugarPaint;
-    private Paint mFruitPaint;
-    private Paint mGrainPaint;*/
+
   /**
-   * boring constructor with just a context
+   * Create a new ChartView with just a context
    */
-  public Chart_View(Context c) {
+  public ChartView(Context c) {
     super(c);
     init();
     mContext = c;
   }
 
   /**
-   * constructor with attrs etc.
+   * Create a new ChartView with a predefined set of attrs.
    */
-  public Chart_View(Context ctx, AttributeSet attrs) {
+  public ChartView(Context ctx, AttributeSet attrs) {
     super(ctx, attrs);
-
     mContext = ctx;
 
     // attrs contains the raw values for the XML attributes
@@ -104,23 +85,18 @@ public class Chart_View extends View {
     //
     // This call uses R.styleable.PieChart, which is an array of
     // the custom attributes that were declared in attrs.xml.
-    TypedArray a = ctx.getTheme().obtainStyledAttributes(
-        attrs,
-        R.styleable.circle,
-        0, 0);
-
+    TypedArray a = ctx.getTheme().
+      obtainStyledAttributes(attrs, R.styleable.circle, 0, 0);
     try {
       // resolve values from the typedarray and store into fields
-      mTouchPointRadius = 
+      mTouchPointRadius =
         a.getInteger(R.styleable.circle_touchPointRadius, 25);
-      mTouchPointColor = 
-        a.getInteger(R.styleable.circle_touchPointColor,0xffff0000); 
-
+      mTouchPointColor =
+        a.getInteger(R.styleable.circle_touchPointColor,0xffff0000);
     } finally {
       // release TypedArray
       a.recycle();
     }
-
     // initialize everything
     init();
   }
@@ -143,10 +119,10 @@ public class Chart_View extends View {
 
     // make the rectf for the boundary
     mCircleBounds = new RectF(
-        0.0f,
-        0.0f,
-        diameter,
-        diameter);
+                              0.0f,
+                              0.0f,
+                              diameter,
+                              diameter);
 
     // offset the boundary rect in accordance with the padding
     mCircleBounds.offsetTo(getPaddingLeft(), getPaddingTop());
@@ -161,9 +137,9 @@ public class Chart_View extends View {
     if (farthest > w - xpad/2 || farthest > h-ypad/2) {
       mTouchPointRadius = (int)Math.min(xpad, ypad)/4;
       mTouchPointRadius+=2;
-      Log.d(TAG, 
-          "Touchpoints are a little big. reducing to: " +
-          mTouchPointRadius);
+      Log.d(TAG,
+            "Touchpoints are a little big. reducing to: " +
+            mTouchPointRadius);
       Log.d(TAG, "mCircle center is: " +mCircleX +", "+mCircleY);
 
     }
@@ -176,33 +152,33 @@ public class Chart_View extends View {
   public boolean getIsEditing() {
     return this.mIsEditing;
   }
-  
-	/**
-	 * Gets the mOrigin variable
-	 * @return Whether or not we can edit the chart
-	 */
-	public String getmOrigin() {
-		return this.mOrigin;
-	}
 
-	/**
-	 * Sets mCanEdit to the given boolean value
-	 * @param canEdit the value to set mCanEdit to.
-	 */
-	public void setmOrigin(String origin) {
-		this.mOrigin = origin;
-	}
-	
-	public boolean isSameOrigin(String other){
-		return this.mOrigin.equals(other);
-	}
-  
-  public void setmCategory(ArrayList<Category> categoryList){
-	  this.mCategories = categoryList;
+  /**
+   * Gets the mOrigin variable
+   * @return Whether or not we can edit the chart
+   */
+  public String getmOrigin() {
+    return this.mOrigin;
   }
-  
+
+  /**
+   * Sets mCanEdit to the given boolean value
+   * @param canEdit the value to set mCanEdit to.
+   */
+  public void setmOrigin(String origin) {
+    this.mOrigin = origin;
+  }
+
+  public boolean isSameOrigin(String other){
+    return this.mOrigin.equals(other);
+  }
+
+  public void setmCategory(ArrayList<Category> categoryList){
+    this.mCategories = categoryList;
+  }
+
   public void setmPoints(ArrayList<TouchPoint> pointsList){
-	  this.mPoints = pointsList;
+    this.mPoints = pointsList;
   }
 
   /**
@@ -227,9 +203,12 @@ public class Chart_View extends View {
    */
   private void addCategory(String category, int color){
     addCategoryHelper(null, null, category, color);
-    addPoints();		
+    addPoints();
   }
 
+  /**
+   * Adds n items to the chart, splitting the space evenly.
+   */
   private void addNItems(int n) {
     double radSections = (Math.PI*2)/n;
     double totalRads = 0;
@@ -239,19 +218,18 @@ public class Chart_View extends View {
     }
   }
 
-
   /**
    * Adds points to the charts
    */
   private void addPoints(){
-    int cSize = mCategories.size();		
+    int cSize = mCategories.size();
     clearPoints();
     addNItems(cSize);
     setPointsToCategories();
   }
 
   /**
-   * Clears all the points 
+   * Clears all the points
    */
   private void clearPoints(){
     mPoints.clear();
@@ -271,6 +249,7 @@ public class Chart_View extends View {
       }
     }
   }
+
   /**
    * Sets the points associated to the category
    */
@@ -289,11 +268,11 @@ public class Chart_View extends View {
 
       i++;
       j++;
-    }      
+    }
   }
 
   /**
-   * Removes the given index from categories ~~cleanly~~ - this means 
+   * Removes the given index from categories ~~cleanly~~ - this means
    * in such a way that we don't reset the chart.
    * @param index The index of the category to remove in mCategories
    */
@@ -331,28 +310,29 @@ public class Chart_View extends View {
    * @param category - the Category of the slice
    * @param color - Color of the category
    */
-  private void addCategoryHelper(TouchPoint pCCW, TouchPoint pCW, String category,  int color){
+  private void addCategoryHelper(TouchPoint pCCW,
+                                 TouchPoint pCW,
+                                 String category,
+                                 int color){
     Category item = new Category(pCCW, pCW, category, color);
-
     mCategories.add(item);
   }
 
   /**
    * Checks whether the category already exists in the list
    * @param category - name of category (ignores UPPER/LOWER case)
-   * @return inList - exist in list 
+   * @return inList - exist in list
    */
   public boolean isCategoryinList(String category){
     boolean inList = false;
-
     for(Category c : mCategories){
       if (c.getCategory().equalsIgnoreCase(category)){
         inList = true;
       }
     }
-
     return inList;
   }
+
   /**
    * Clears the Chart of its contents
    * Clears associated ArrayLists
@@ -360,7 +340,7 @@ public class Chart_View extends View {
   public void clearChart() {
     // TODO Auto-generated method stub
     this.mCategories.clear();
-    this.mPoints.clear();	
+    this.mPoints.clear();
     invalidate();
   }
 
@@ -370,11 +350,11 @@ public class Chart_View extends View {
    */
   public JSONArray getChartData(){
     Log.d(TAG, mCategories.toString());
-    String localTag = "Chart_View.getChartData";
+    String localTag = "ChartView.getChartData";
     JSONArray jsonArray = new JSONArray();
 
     for(Category category : mCategories){
-      Map obj = new LinkedHashMap(); 
+      Map obj = new LinkedHashMap();
 
       obj.put("Category", category.getCategory());
       obj.put("pCCW", category.getpCCW().getmRads());
@@ -394,22 +374,6 @@ public class Chart_View extends View {
    */
   protected void onDraw(Canvas canvas) {
     super.onDraw(canvas);
-/*  */
-/*     Paint background = new Paint(Paint.ANTI_ALIAS_FLAG); */
-/*     background.setColor(this.getResources().getColor(R.color.Chart_Background)); */
-/*     background.setStyle(Paint.Style.FILL_AND_STROKE); */
-/*     canvas.drawRect(mCircleBounds, background); */
-/*  */
-//
-//    TextView overlay = (TextView) 
-//        ((Activity)mContext).findViewById(R.id.empty_chart_message);
-//    if (!mCategories.isEmpty()) {
-//      Log.d(TAG, "setting overlay text to invisible in chart_view");
-//      overlay.setVisibility(View.INVISIBLE);
-//    } else {
-//      Log.d(TAG, "setting overlay text to visible in chart_view");
-//      overlay.setVisibility(View.VISIBLE);
-//    }
 
     int size = mCategories.size();
     if (size >= 2){
@@ -435,20 +399,19 @@ public class Chart_View extends View {
         sweepAngle = radsToDegree(sweepAngle);
         canvas.drawArc(mCircleBounds, startAngle, sweepAngle, true, color);
 
-      }	
-
+      }
 
       // drawing the touch-points
       for (TouchPoint point : mPoints) {
         PointF touchPointCoords = radsToPointF(point.getmRads());
         //Draw the separators
         canvas.drawLine(
-            mCircleX,
-            mCircleY,
-            touchPointCoords.x,
-            touchPointCoords.y,
-            mSeparatorLinesPaint
-            );
+                        mCircleX,
+                        mCircleY,
+                        touchPointCoords.x,
+                        touchPointCoords.y,
+                        mSeparatorLinesPaint
+                        );
       }
       if (mIsEditing) {
         Log.d(TAG, "@@onDraw, editing - drawing the touchPoints");
@@ -456,11 +419,11 @@ public class Chart_View extends View {
           PointF touchPointCoords = radsToPointF(point.getmRads());
           // draw the touchPoint on the canvas
           canvas.drawCircle(
-              touchPointCoords.x,
-              touchPointCoords.y,
-              mTouchPointRadius,
-              mTouchPointPaint
-              );
+                            touchPointCoords.x,
+                            touchPointCoords.y,
+                            mTouchPointRadius,
+                            mTouchPointPaint
+                            );
         }
       }
     } else if (size == 1) { // only one category
@@ -475,7 +438,7 @@ public class Chart_View extends View {
       noCats.setStyle(Paint.Style.FILL_AND_STROKE);
       canvas.drawArc(mCircleBounds, 0f, 360f, true, noCats);
     }
-    // drawing the circle
+    // drawing the circle boundary
     /* canvas.drawCircle( */
     /*     mCircleX, */
     /*     mCircleY, */
@@ -489,37 +452,32 @@ public class Chart_View extends View {
    * doing stuff with touch
    */
   @Override
-    public boolean onTouchEvent(MotionEvent event) {
-      //Log.d(TAG, "ONTOUCHEVENT | received a touchEvent");
-      boolean result = mGestureDetector.onTouchEvent(event);
+  public boolean onTouchEvent(MotionEvent event) {
+    //Log.d(TAG, "ONTOUCHEVENT | received a touchEvent");
+    boolean result = mGestureDetector.onTouchEvent(event);
 
-      // if we're not editing, we can't touch anything.
-      if (!mIsEditing) {
-        Log.d(TAG, "onTouchEvent returning false = !mIsEditing");
-        return false;
-      }
-
-      // if the user lifts their finger, we're not in a scroll.
-      if (event.getAction() == MotionEvent.ACTION_UP) {
-        inScroll = false;
-        onScrollFinished();
-      }
-
-      // return true if mGestureDetector handled the event
-      if (result) {
-        return result;
-      }
+    // if we're not editing, we can't touch anything.
+    if (!mIsEditing) {
+      Log.d(TAG, "onTouchEvent returning false = !mIsEditing");
       return false;
-
     }
+
+    // if the user lifts their finger, we're not in a scroll.
+    if (event.getAction() == MotionEvent.ACTION_UP) {
+      inScroll = false;
+      onScrollFinished();
+    }
+
+    // return true if mGestureDetector handled the event
+    if (result) {
+      return result;
+    }
+    return false;
+
+  }
 
   private float radsToDegree(double val){
     float toDegree = (float) Math.toDegrees(val);
-    /*Log.d(TAG, 
-      val +
-      " radians is " +
-      toDegree +
-      "degrees");*/
     return toDegree;
   }
 
@@ -566,7 +524,7 @@ public class Chart_View extends View {
     // set up the separatorLines paint
     mSeparatorLinesPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     mSeparatorLinesPaint.setStyle(Paint.Style.STROKE);
-    
+
     addCategory("Protein", getResources().getColor(R.color.Protein));
     addCategory("OilSugar", getResources().getColor(R.color.Oil_Sugar));
 
@@ -576,11 +534,11 @@ public class Chart_View extends View {
 
     // set up the gesture detector
     mGestureDetector = new GestureDetector(
-        Chart_View.this.getContext(), 
-        new GestureListener());
+                                           ChartView.this.getContext(),
+                                           new GestureListener());
 
     // Turn off long press--this control doesn't use it, and if long press is
-    // enabled, you can't scroll for a bit, pause, then scroll some more 
+    // enabled, you can't scroll for a bit, pause, then scroll some more
     // (the pause is interpreted as a long press, apparently)
     mGestureDetector.setIsLongpressEnabled(false);
 
@@ -592,7 +550,6 @@ public class Chart_View extends View {
       System.out.println(i + ": " + mPoints.get(i).getmRads());
     }
   }
-
 
   /**
    * Moves start delta degrees clockwise
@@ -628,7 +585,7 @@ public class Chart_View extends View {
   }
 
   /**
-   * returns true if the given x and y coords are "inside" of point p - in 
+   * returns true if the given x and y coords are "inside" of point p - in
    * quotes because we're a little lenient to give the users some wiggle room.
    * @param x The x value of the coordinate to check
    * @param y The y-value of the coordinate to check
@@ -636,9 +593,9 @@ public class Chart_View extends View {
    */
   private boolean isTouchingThisPoint(float x, float y, TouchPoint p) {
     PointF pCoords = radsToPointF((double)p.getmRads());
-    double dist = Math.sqrt( 
-        Math.pow( (double)pCoords.x - x, 2) +
-        Math.pow( (double)pCoords.y - y, 2));
+    double dist = Math.sqrt(
+                            Math.pow( (double)pCoords.x - x, 2) +
+                            Math.pow( (double)pCoords.y - y, 2));
     // make it * 2 to give users a little breathing room(the dots are small)
     return dist <= mTouchPointRadius*2;
   }
@@ -655,7 +612,7 @@ public class Chart_View extends View {
 
   /**
    * returns true if the given point has another point in front of it
-   * (clockwise) within ANGLE_THRESHOLD or less - should only be called if 
+   * (clockwise) within ANGLE_THRESHOLD or less - should only be called if
    * the touchPoint is being rotated clockwise.
    * @param p1 the point to check
    */
@@ -666,16 +623,16 @@ public class Chart_View extends View {
           ((Math.PI + point.getmRads() + Math.PI - p1.getmRads()) <= ANGLE_THRESHOLD)) {
         return true;
       } else if (point.getmRads() > p1.getmRads() &&
-          point.getmRads() - p1.getmRads() < ANGLE_THRESHOLD) {
+                 point.getmRads() - p1.getmRads() < ANGLE_THRESHOLD) {
         return true;
-          }
+      }
     }
     return false;
   }
 
   /**
    * returns true if the given point has another point in behind it
-   * (counter-clockwise) within 10 degrees or less - should only be called if 
+   * (counter-clockwise) within 10 degrees or less - should only be called if
    * the touchPoint is being rotated counterclockwise.
    * @param p1 the point to check
    */
@@ -686,9 +643,9 @@ public class Chart_View extends View {
           (Math.PI - point.getmRads() + Math.PI + p1.getmRads() <= ANGLE_THRESHOLD)) {
         return true;
       } else if (point.getmRads() < p1.getmRads() &&
-          p1.getmRads() - point.getmRads() <= ANGLE_THRESHOLD) {
+                 p1.getmRads() - point.getmRads() <= ANGLE_THRESHOLD) {
         return true;
-          }
+      }
     }
     return false;
   }
@@ -727,68 +684,68 @@ public class Chart_View extends View {
       if (getDifference(r1, rm) > 0 &&
           getDifference(r2, rm) < 0) {
         return true;
-          }
+      }
     }
     return false;
   }
 
-  /** 
+  /**
    * on my anonymous inner class grind - this sorts the given arraylist by
    * the rotation distance from refRad to each touchPoint, clockwise.
    * @param pts The arrayList to sort
    * @param refRad The referance radian measurement
    */
   private void sortListCW(
-      ArrayList<TouchPoint> pts,
-      final double refRad) {
+                          ArrayList<TouchPoint> pts,
+                          final double refRad) {
 
-    Collections.sort( pts, 
-        new Comparator<TouchPoint>() {
-          public int compare(TouchPoint a, TouchPoint b) {
-            // difference is >0 if clockwise, <0 if not.
-            double aDiff = getDifference(refRad, a.getmRads());
-            double bDiff = getDifference(refRad, b.getmRads());
-            if (aDiff < 0) {
-              aDiff = Math.PI*2 + aDiff;
-            }
-            if (bDiff < 0) {
-              bDiff = Math.PI*2 + bDiff;
-            }
-            return (aDiff > bDiff ? 1 : (aDiff == bDiff ? 0 : -1));
-          }
-    }
-    );
-      }
+    Collections.sort( pts,
+                      new Comparator<TouchPoint>() {
+                        public int compare(TouchPoint a, TouchPoint b) {
+                          // difference is >0 if clockwise, <0 if not.
+                          double aDiff = getDifference(refRad, a.getmRads());
+                          double bDiff = getDifference(refRad, b.getmRads());
+                          if (aDiff < 0) {
+                            aDiff = Math.PI*2 + aDiff;
+                          }
+                          if (bDiff < 0) {
+                            bDiff = Math.PI*2 + bDiff;
+                          }
+                          return (aDiff > bDiff ? 1 : (aDiff == bDiff ? 0 : -1));
+                        }
+                      }
+                      );
+  }
 
-  /** 
+  /**
    * on my anonymous inner class grind - this sorts the given arraylist by
    * the rotation distance from refRad to each touchPoint, counter-clockwise.
    * @param pts The arrayList to sort
    * @param refRad The referance radian measurement
    */
   private void sortListCCW(
-      ArrayList<TouchPoint> pts,
-      final double refRad) {
+                           ArrayList<TouchPoint> pts,
+                           final double refRad) {
 
-    Collections.sort( pts, 
-        new Comparator<TouchPoint>() {
-          public int compare(TouchPoint a, TouchPoint b) {
-            // difference is >0 if clockwise, <0 if not.
-            double aDiff = getDifference(refRad, a.getmRads());
-            double bDiff = getDifference(refRad, b.getmRads());
-            if (aDiff < 0) {
-              aDiff = Math.PI*2 + aDiff;
-            }
-            if (bDiff < 0) {
-              bDiff = Math.PI*2 + bDiff;
-            }
-            return (aDiff > bDiff ? -1 : (aDiff == bDiff ? 0 : 1));
-          }
-    }
-    );
+    Collections.sort( pts,
+                      new Comparator<TouchPoint>() {
+                        public int compare(TouchPoint a, TouchPoint b) {
+                          // difference is >0 if clockwise, <0 if not.
+                          double aDiff = getDifference(refRad, a.getmRads());
+                          double bDiff = getDifference(refRad, b.getmRads());
+                          if (aDiff < 0) {
+                            aDiff = Math.PI*2 + aDiff;
+                          }
+                          if (bDiff < 0) {
+                            bDiff = Math.PI*2 + bDiff;
+                          }
+                          return (aDiff > bDiff ? -1 : (aDiff == bDiff ? 0 : 1));
+                        }
+                      }
+                      );
     pts.add(0, mPoints.get(mPoints.size()-1));
     pts.remove(mPoints.size()-1);
-      }
+  }
 
   /**
    * Handles when the scroll movement is finished
@@ -808,8 +765,7 @@ public class Chart_View extends View {
    * @param end The end radian
    * @param cw True if we're moving clockwise
    */
-  private ArrayList<Double> interpolate(
-      double start, double finish, boolean cw) {
+  private ArrayList<Double> interpolate(double start, double finish, boolean cw) {
     ArrayList<Double> interpolated = new ArrayList<Double>();
     double diff = getDifference(start, finish);
 
@@ -835,7 +791,7 @@ public class Chart_View extends View {
       }
     }
     return interpolated;
-      }
+  }
 
   /**
    * Moves the point being touched to the given radian, moving all other
@@ -893,7 +849,6 @@ public class Chart_View extends View {
     return skipped;
   }
 
-
   /**
    * Move all points in mPoints, given the curRad and lastRad values from an
    * onScrollEvent
@@ -913,9 +868,11 @@ public class Chart_View extends View {
       /* if (Math.abs(diff) > ANGLE_INTERVAL) { */
       Log.d(TAG, "@@_movePoints | diff > interval. Interpolating...");
       // interpolate the values
-      ArrayList<Double> interpolated = interpolate(mPoints.get(0).getmRads(), curRad, clockwise);
+      ArrayList<Double> interpolated = interpolate(mPoints.get(0).getmRads(),
+                                                   curRad, clockwise);
       for (Double rad : interpolated) {
-        Log.d(TAG, "@@_movePoints | moving pt being touched to : " +rad +" from " +mPoints.get(0).getmRads());
+        Log.d(TAG, "@@_movePoints | moving pt being touched to : "+
+              rad + " from " + mPoints.get(0).getmRads());
         movePointBeingTouched(rad, clockwise);
       }
       Log.d(TAG, "@@_movePoints | done interpolating");
@@ -932,65 +889,65 @@ public class Chart_View extends View {
   private class GestureListener extends GestureDetector.SimpleOnGestureListener {
 
     @Override
-      public boolean onScroll(
-          MotionEvent e1,
-          MotionEvent e2,
-          float distanceX,
-          float distanceY) {
+    public boolean onScroll(
+                            MotionEvent e1,
+                            MotionEvent e2,
+                            float distanceX,
+                            float distanceY) {
 
-        if (!mIsEditing) { return false;}
-        // if we can't edit, fuhgeddaboutit
-        /* if (isSameOrigin(TAG_FROMHISTORY)) { return false;} */
+      if (!mIsEditing) { return false;}
+      // if we can't edit, fuhgeddaboutit
+      /* if (isSameOrigin(TAG_FROMHISTORY)) { return false;} */
 
-        float lastX = e2.getX() + distanceX;
-        float lastY = e2.getY() + distanceY;
+      float lastX = e2.getX() + distanceX;
+      float lastY = e2.getY() + distanceY;
 
-        // calculate the degree values of the last touch event and the 
-        // current touch event
-        double lastRad = coordsToRads(lastX, lastY);
-        double curRad = coordsToRads(e2.getX(), e2.getY());
+      // calculate the degree values of the last touch event and the
+      // current touch event
+      double lastRad = coordsToRads(lastX, lastY);
+      double curRad = coordsToRads(e2.getX(), e2.getY());
 
-        // have we moved clockwise?
-        boolean clockwise = movingClockwise(lastRad, curRad);
+      // have we moved clockwise?
+      boolean clockwise = movingClockwise(lastRad, curRad);
 
-        // if we're not in a scroll already, figure out which one is being 
-        // touched
-        if (!inScroll) {
-          for (TouchPoint p : mPoints) {
-            // mark the point being touched
-            if (isTouchingThisPoint(e1.getX(), e1.getY(), p)) {
-              inScroll = true;
-              p.isBeingTouched = true;
-            }
+      // if we're not in a scroll already, figure out which one is being
+      // touched
+      if (!inScroll) {
+        for (TouchPoint p : mPoints) {
+          // mark the point being touched
+          if (isTouchingThisPoint(e1.getX(), e1.getY(), p)) {
+            inScroll = true;
+            p.isBeingTouched = true;
           }
         }
-        if (inScroll) {
-          // Then, sort mPoints accordingly
-          double touchRads = 0;;
-          for (TouchPoint p : mPoints) {
-            if (p.isBeingTouched) {
-              touchRads = p.getmRads();
-            }
+      }
+      if (inScroll) {
+        // Then, sort mPoints accordingly
+        double touchRads = 0;;
+        for (TouchPoint p : mPoints) {
+          if (p.isBeingTouched) {
+            touchRads = p.getmRads();
           }
-          if (clockwise) {
-            sortListCW(mPoints, touchRads);
-          } else {
-            sortListCCW(mPoints, touchRads);
-          }
-
-          movePoints(curRad, lastRad, clockwise);
-          invalidate();
-          return true;
         }
+        if (clockwise) {
+          sortListCW(mPoints, touchRads);
+        } else {
+          sortListCCW(mPoints, touchRads);
+        }
+
+        movePoints(curRad, lastRad, clockwise);
         invalidate();
-        return false;
-          }
+        return true;
+      }
+      invalidate();
+      return false;
+    }
 
     // we need to return true here so we can actually scroll.
     public boolean onDown(MotionEvent e) {
       for (TouchPoint p : mPoints) {
         if (isTouchingThisPoint(e.getX(), e.getY(), p)) {
-          Vibrator v = 
+          Vibrator v =
             (Vibrator) mContext.getSystemService(Context.VIBRATOR_SERVICE);
           v.vibrate(25);
           inScroll = true;
@@ -1001,5 +958,3 @@ public class Chart_View extends View {
       return true;
     }
   }
-
-}

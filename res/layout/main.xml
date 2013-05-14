@@ -6,7 +6,7 @@
     android:layout_height="fill_parent"
     >
 
-    <org.dcalacci.android.ipc.Chart_View
+    <org.dcalacci.android.ipc.ChartView
         android:id="@+id/view"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
