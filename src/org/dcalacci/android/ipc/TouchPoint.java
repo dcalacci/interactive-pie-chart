@@ -81,12 +81,17 @@ public class TouchPoint implements Comparable<TouchPoint> {
 
   /**
    * @return
-   *  This TouchPoint's radian value
+   *  	This TouchPoint's radian value
    */
   public double getmRads() {
     return this.mRads;
   }
 
+  /**
+   * Sets this touchpoints' radian value
+   * @param rads
+   * 	The value to set this touchpoint's radian value to.
+   */
   public void setmRads(Double rads) {
     this.mRads = rads;
   }

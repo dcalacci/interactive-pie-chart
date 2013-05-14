@@ -344,29 +344,46 @@ public class ChartView extends View {
     invalidate();
   }
 
-  /**
-   * gets the Chart data (Category Name, pCCW, pCW)
-   * @return JSONArray - Contains JSONObjects of each category
-   */
-  public JSONArray getChartData(){
+  // /**
+  //  * gets the Chart data (Category Name, pCCW, pCW)
+  //  * @return JSONArray - Contains JSONObjects of each category
+  //  */
+  // private JSONArray getChartData(){
+  //   Log.d(TAG, mCategories.toString());
+  //   String localTag = "ChartView.getChartData";
+  //   JSONArray jsonArray = new JSONArray();
+
+  //   for(Category category : mCategories){
+  //     Map obj = new LinkedHashMap();
+
+  //     obj.put("Category", category.getCategory());
+  //     obj.put("pCCW", category.getpCCW().getmRads());
+  //     obj.put("pCW", category.getpCW().getmRads());
+
+  //     JSONObject jsonObject = new JSONObject(obj);
+  //     jsonArray.put(jsonObject);
+
+  //   }
+  //   return jsonArray;
+  //  }
+
+  public JSONArray getChartData() {
     Log.d(TAG, mCategories.toString());
-    String localTag = "ChartView.getChartData";
-    JSONArray jsonArray = new JSONArray();
-
-    for(Category category : mCategories){
+    JSONArray array = new JSONArray();
+    for (Category category : mCategories) {
       Map obj = new LinkedHashMap();
-
-      obj.put("Category", category.getCategory());
-      obj.put("pCCW", category.getpCCW().getmRads());
-      obj.put("pCW", category.getpCW().getmRads());
-
-      JSONObject jsonObject = new JSONObject(obj);
-      jsonArray.put(jsonObject);
-
+      obj.put("name", category.getCategory());
+      obj.put("amt", getPercentage(category.getpCCW(), category.getpCW()));
+      JSONObject jObj = new JSONObject(obj);
+      array.put(jObj);
     }
-    return jsonArray;
+    return array;
   }
 
+  private Double getPercentage(TouchPoint pCCW, TouchPoint pCW) {
+    Double diff = getDifference(pCCW.getmRads(), pCW.getmRads());
+    return Math.abs(diff/(2*Math.PI));
+  }
 
   /**
    * Draws the view
@@ -500,7 +517,6 @@ public class ChartView extends View {
    * */
   private double coordsToRads(float x, float y) {
     double rads = (double) Math.atan2((y - mCircleX),(x - mCircleX));
-    // range of atan2 output is -pi to pi...it's weird.
     return rads;
   }
 
@@ -958,3 +974,4 @@ public class ChartView extends View {
       return true;
     }
   }
+}
